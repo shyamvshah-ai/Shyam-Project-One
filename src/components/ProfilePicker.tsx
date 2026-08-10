@@ -1,0 +1,83 @@
+import type { ProfileId } from '../types'
+import { useStore } from '../state/store'
+import { portfolioSummary } from '../lib/portfolio'
+import { money } from '../lib/format'
+import { PRICES_ARE_REAL } from '../lib/prices'
+
+// The landing screen: "Who's exploring today?" — three big, friendly cards.
+
+export default function ProfilePicker({ onPick }: { onPick: (id: ProfileId) => void }) {
+  const { state } = useStore()
+  const sai = state.kids.sai
+  const leila = state.kids.leila
+
+  return (
+    <div className="mx-auto flex min-h-full max-w-3xl flex-col items-center justify-center px-4 py-10">
+      <div className="mb-2 text-5xl">🚀</div>
+      <h1 className="text-center text-3xl font-extrabold text-indigo-900 sm:text-4xl">
+        Money Explorers
+      </h1>
+      <p className="mb-8 mt-2 text-center text-indigo-500">
+        Learn how investing works with pretend money. Who’s exploring today?
+      </p>
+
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+        <KidCard
+          emoji={sai.emoji}
+          name={sai.name}
+          colour={sai.colour}
+          subtitle={`Worth ${money(portfolioSummary(sai).totalValue)}`}
+          onClick={() => onPick('sai')}
+        />
+        <KidCard
+          emoji={leila.emoji}
+          name={leila.name}
+          colour={leila.colour}
+          subtitle={`Worth ${money(portfolioSummary(leila).totalValue)}`}
+          onClick={() => onPick('leila')}
+        />
+        <KidCard
+          emoji="🧑‍💼"
+          name="Parent"
+          colour="#4f46e5"
+          subtitle="Overview & allowance"
+          onClick={() => onPick('parent')}
+        />
+      </div>
+
+      {!PRICES_ARE_REAL && (
+        <p className="mt-8 max-w-md rounded-2xl bg-amber-100 px-4 py-3 text-center text-sm font-medium text-amber-800">
+          Using <strong>practice prices</strong> for now. A grown-up can run{' '}
+          <code className="rounded bg-amber-200 px-1">npm run refresh-prices</code> to switch to
+          real market data.
+        </p>
+      )}
+    </div>
+  )
+}
+
+function KidCard({
+  emoji,
+  name,
+  colour,
+  subtitle,
+  onClick,
+}: {
+  emoji: string
+  name: string
+  colour: string
+  subtitle: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="card flex flex-col items-center gap-2 p-6 text-center transition hover:-translate-y-1 hover:shadow-md focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300"
+      style={{ borderTop: `6px solid ${colour}` }}
+    >
+      <span className="text-6xl">{emoji}</span>
+      <span className="text-xl font-extrabold text-indigo-900">{name}</span>
+      <span className="text-sm text-indigo-400">{subtitle}</span>
+    </button>
+  )
+}

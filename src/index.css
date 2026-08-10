@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f5f3ff;
+  background-image: radial-gradient(circle at 15% 0%, #ede9fe 0%, transparent 45%),
+    radial-gradient(circle at 100% 10%, #dbeafe 0%, transparent 40%);
+  background-attachment: fixed;
+  color: #1e1b4b;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl2 bg-white/90 shadow-sm ring-1 ring-black/5 backdrop-blur;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 font-semibold
+      transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-700;
+  }
+
+  .btn-ghost {
+    @apply btn bg-brand-50 text-brand-700 hover:bg-brand-100;
+  }
+
+  .tab {
+    @apply flex-1 rounded-full px-3 py-2 text-center text-sm font-bold transition sm:text-base;
+  }
+}
+
+/* Reduce motion for kids who prefer it / accessibility. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
