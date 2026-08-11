@@ -21,6 +21,20 @@ const END = new Date('2026-08-10T00:00:00Z')
 
 const dates = businessDays(END, TRADING_DAYS)
 const series = {}
+const local = {}
+
+// Approximate £→native conversion for the placeholder only (real prices come
+// with their true native values from Yahoo). US listings are USD; London shares
+// quote in pence (GBp); London funds quote in pounds (GBP).
+const GBP_PER_USD = 0.79
+function localFor(asset, gbpPrice) {
+  const suffix = asset.source.split('.').pop()
+  if (suffix === 'uk') {
+    if (asset.kind === 'etf') return { currency: 'GBP', price: round2(gbpPrice) }
+    return { currency: 'GBp', price: round2(gbpPrice * 100) }
+  }
+  return { currency: 'USD', price: round2(gbpPrice / GBP_PER_USD) }
+}
 
 for (const asset of UNIVERSE) {
   const rng = mulberry32(hashSeed(asset.ticker))
@@ -43,7 +57,9 @@ for (const asset of UNIVERSE) {
     raw.push(raw[i - 1] * Math.exp(ret))
   }
   const scale = asset.seedPrice / raw[raw.length - 1]
-  series[asset.ticker] = raw.map((v) => round2(Math.max(v * scale, 0.01)))
+  const gbpSeries = raw.map((v) => round2(Math.max(v * scale, 0.01)))
+  series[asset.ticker] = gbpSeries
+  local[asset.ticker] = localFor(asset, gbpSeries[gbpSeries.length - 1])
 }
 
 const payload = {
@@ -52,6 +68,7 @@ const payload = {
   currency: 'GBP',
   dates,
   series,
+  local,
 }
 
 writeFileSync(OUT, JSON.stringify(payload) + '\n')

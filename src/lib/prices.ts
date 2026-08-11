@@ -22,6 +22,11 @@ export function hasPrices(ticker: string): boolean {
   return Array.isArray(s) && s.length > 0
 }
 
+/** Latest price in the asset's own currency (e.g. USD, pence), if we have it. */
+export function localPrice(ticker: string): { currency: string; price: number } | undefined {
+  return PRICES.local?.[ticker]
+}
+
 /** Latest known close price for a ticker (£), or undefined if we have none. */
 export function latestPrice(ticker: string): number | undefined {
   const s = PRICES.series[ticker]

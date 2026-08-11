@@ -88,6 +88,7 @@ async function main() {
   console.log(`  £ per $1 = ${conv.USD.toFixed(4)}`)
 
   const raw = {} // ticker -> Map<date, gbpClose>
+  const local = {} // ticker -> { currency, price } in the asset's own currency
   const allDates = new Set()
 
   for (const asset of UNIVERSE) {
@@ -99,6 +100,9 @@ async function main() {
       const gbp = new Map()
       for (const [date, close] of points) gbp.set(date, close * rate)
       raw[asset.ticker] = gbp
+      // Latest price in the asset's own currency, for display alongside £.
+      const lastNative = [...points.values()].at(-1)
+      if (lastNative != null) local[asset.ticker] = { currency, price: round2(lastNative) }
       for (const d of gbp.keys()) allDates.add(d)
       process.stdout.write('.')
     } catch (err) {
@@ -133,7 +137,7 @@ async function main() {
     ok++
   }
 
-  const payload = { generatedAt: new Date().toISOString(), real: true, currency: 'GBP', dates, series }
+  const payload = { generatedAt: new Date().toISOString(), real: true, currency: 'GBP', dates, series, local }
   writeFileSync(OUT, JSON.stringify(payload) + '\n')
   console.log(`Done. Real prices for ${ok}/${UNIVERSE.length} assets, ${dates.length} days.`)
   console.log(`Latest trading day in data: ${dates.at(-1)}.`)

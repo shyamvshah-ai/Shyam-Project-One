@@ -45,8 +45,13 @@ export interface PriceData {
   currency: 'GBP'
   /** Shared, ascending list of ISO dates that every series lines up against. */
   dates: string[]
-  /** ticker -> close price per date (same length/order as `dates`). */
+  /** ticker -> close price per date (same length/order as `dates`), in £. */
   series: Record<string, number[]>
+  /**
+   * Latest price in the asset's *own* (local) currency, for display alongside
+   * the £ price — e.g. US shares in USD, London shares in pence (GBp).
+   */
+  local?: Record<string, { currency: string; price: number }>
 }
 
 export type TradeAction = 'buy' | 'sell'

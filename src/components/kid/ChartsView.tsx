@@ -4,7 +4,6 @@ import {
   AreaChart,
   CartesianGrid,
   Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -12,22 +11,14 @@ import {
 } from 'recharts'
 import type { KidProfile } from '../../types'
 import { currentWorthHistory } from '../../lib/portfolio'
-import { priceHistory } from '../../lib/prices'
 import { getAsset } from '../../data/universe'
-import { money, moneyExact, percent, shortDate } from '../../lib/format'
+import { money, percent, shortDate } from '../../lib/format'
 import { Card, SectionTitle } from '../common/ui'
+import PriceChart, { RANGES } from '../common/PriceChart'
 
 // "Charts" — how the whole portfolio has grown, and each holding's price.
 // A time-range toggle controls both charts; the vertical axis auto-zooms so
 // movement is easy to see (not a flat line filling the box).
-
-const RANGES = [
-  { label: '1W', days: 5 },
-  { label: '1M', days: 21 },
-  { label: '3M', days: 63 },
-  { label: '1Y', days: 252 },
-  { label: 'All', days: 0 },
-]
 
 export default function ChartsView({ kid, detailed }: { kid: KidProfile; detailed: boolean }) {
   const owned = kid.holdings.map((h) => h.ticker)
@@ -152,42 +143,11 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
                 )
               })}
             </div>
-            <HoldingChart ticker={ticker} days={days} />
+            <PriceChart ticker={ticker} days={days} />
           </>
         )}
       </Card>
     </div>
-  )
-}
-
-function HoldingChart({ ticker, days }: { ticker: string; days: number }) {
-  const data = useMemo(() => priceHistory(ticker, days || undefined), [ticker, days])
-  if (data.length < 2) return <p className="text-indigo-400">Not enough price history yet.</p>
-  const rising = data[data.length - 1].price >= data[0].price
-  const colour = rising ? '#16a34a' : '#dc2626'
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={data} margin={{ top: 5, right: 5, left: -18, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#eef" />
-        <XAxis
-          dataKey="date"
-          tickFormatter={shortDate}
-          minTickGap={40}
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
-        />
-        <YAxis
-          tickFormatter={(v) => moneyExact(v)}
-          width={64}
-          domain={['auto', 'auto']}
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
-        />
-        <Tooltip
-          formatter={(v: number) => [moneyExact(v), 'Price']}
-          labelFormatter={(l) => shortDate(String(l))}
-        />
-        <Line type="monotone" dataKey="price" stroke={colour} strokeWidth={3} dot={false} />
-      </LineChart>
-    </ResponsiveContainer>
   )
 }
 

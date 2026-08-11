@@ -56,6 +56,27 @@ export function shortDate(iso: string): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
+/** Format a price in its own local currency, e.g. "$308.20", "475p", "€120.50". */
+export function localMoney(currency: string, price: number): string {
+  switch (currency) {
+    case 'USD':
+      return `$${price.toFixed(2)}`
+    case 'EUR':
+      return `€${price.toFixed(2)}`
+    case 'GBP':
+      return `£${price.toFixed(2)}`
+    case 'GBp':
+    case 'GBX':
+      return `${Math.round(price)}p`
+    case 'JPY':
+      return `¥${Math.round(price)}`
+    case 'CHF':
+      return `CHF ${price.toFixed(2)}`
+    default:
+      return `${price.toFixed(2)} ${currency}`
+  }
+}
+
 /** Direction word for up/down/flat, used with colour cues. */
 export function direction(n: number): 'up' | 'down' | 'flat' {
   if (n > 0) return 'up'

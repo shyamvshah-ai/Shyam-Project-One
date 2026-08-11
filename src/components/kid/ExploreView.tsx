@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import type { Asset, KidProfile, TradeAction } from '../../types'
 import { UNIVERSE } from '../../data/universe'
-import { dailyChange, hasPrices, latestPrice, priceHistory } from '../../lib/prices'
-import { moneyExact, percent } from '../../lib/format'
+import { dailyChange, hasPrices, latestPrice, localPrice, priceHistory } from '../../lib/prices'
+import { localMoney, moneyExact, percent } from '../../lib/format'
 import { Card, GainPill, Sparkline } from '../common/ui'
 import Jargon from '../common/Jargon'
+import AssetChartModal from './AssetChartModal'
 
 // "Explore" — browse the curated, kid-friendly universe. Every card explains in
 // plain English what the company or fund actually is.
@@ -22,6 +23,7 @@ export default function ExploreView({
 }) {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
+  const [chartAsset, setChartAsset] = useState<Asset | null>(null)
   const owned = new Set(kid.holdings.map((h) => h.ticker))
 
   const list = useMemo(() => {
@@ -67,11 +69,21 @@ export default function ExploreView({
             detailed={detailed}
             owned={owned.has(a.ticker)}
             onTrade={onTrade}
+            onOpenChart={setChartAsset}
           />
         ))}
       </div>
       {list.length === 0 && (
         <Card className="text-center text-indigo-500">No matches — try a different search.</Card>
+      )}
+
+      {chartAsset && (
+        <AssetChartModal
+          asset={chartAsset}
+          detailed={detailed}
+          onClose={() => setChartAsset(null)}
+          onTrade={onTrade}
+        />
       )}
     </div>
   )
@@ -107,13 +119,16 @@ function AssetCard({
   detailed,
   owned,
   onTrade,
+  onOpenChart,
 }: {
   asset: Asset
   detailed: boolean
   owned: boolean
   onTrade: (asset: Asset, action: TradeAction) => void
+  onOpenChart: (asset: Asset) => void
 }) {
   const price = latestPrice(asset.ticker) ?? 0
+  const local = localPrice(asset.ticker)
   const day = dailyChange(asset.ticker)
 
   return (
@@ -129,7 +144,18 @@ function AssetCard({
             {asset.kind === 'etf' ? '🧺 Basket' : '🏢 Company'} · {asset.sector} · {asset.geography}
           </div>
         </div>
-        <Sparkline points={priceHistory(asset.ticker, 60)} width={64} height={28} />
+        {/* Tap the mini-chart to open the full history. */}
+        <button
+          onClick={() => onOpenChart(asset)}
+          className="group flex flex-col items-center rounded-xl p-1 transition hover:bg-brand-50"
+          aria-label={`See ${asset.name} price history`}
+          title="Tap to see the price chart"
+        >
+          <Sparkline points={priceHistory(asset.ticker, 60)} width={64} height={28} />
+          <span className="text-[10px] font-semibold text-brand-400 group-hover:text-brand-600">
+            📈 chart
+          </span>
+        </button>
       </div>
 
       <p className="mt-2 text-sm text-indigo-600">{asset.blurb}</p>
@@ -138,7 +164,14 @@ function AssetCard({
 
       <div className="mt-3 flex items-center justify-between">
         <div>
-          <div className="text-lg font-extrabold text-indigo-900">{moneyExact(price)}</div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-lg font-extrabold text-indigo-900">{moneyExact(price)}</span>
+            {local && local.currency !== 'GBP' && (
+              <span className="text-xs font-semibold text-indigo-400">
+                {localMoney(local.currency, local.price)}
+              </span>
+            )}
+          </div>
           <GainPill amount={day.change} pct={day.pct} simple={!detailed} size="sm" />
         </div>
         <button className="btn-primary" onClick={() => onTrade(asset, 'buy')}>

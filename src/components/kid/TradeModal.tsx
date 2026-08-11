@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import type { Asset, KidProfile, TradeAction } from '../../types'
 import { useStore } from '../../state/store'
-import { latestPrice, priceHistory } from '../../lib/prices'
-import { moneyExact, moneySmart, shares as fmtShares } from '../../lib/format'
+import { latestPrice, localPrice, priceHistory } from '../../lib/prices'
+import { moneyExact, moneySmart, localMoney, shares as fmtShares } from '../../lib/format'
 import { Sparkline } from '../common/ui'
 
 // The buy/sell dialog. The key teaching rule lives here: you cannot confirm a
@@ -61,7 +61,13 @@ export default function TradeModal({
           <span className="text-4xl">{asset.emoji}</span>
           <div className="min-w-0 flex-1">
             <div className="truncate text-lg font-extrabold text-indigo-900">{asset.name}</div>
-            <div className="text-sm text-indigo-400">{moneyExact(price)} each</div>
+            <div className="text-sm text-indigo-400">
+              {moneyExact(price)} each
+              {(() => {
+                const l = localPrice(asset.ticker)
+                return l && l.currency !== 'GBP' ? ` · ${localMoney(l.currency, l.price)}` : ''
+              })()}
+            </div>
           </div>
           <Sparkline points={spark} />
         </div>
