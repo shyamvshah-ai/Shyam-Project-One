@@ -1,36 +1,67 @@
 name: Build & deploy Money Explorers
 
-# Manual verification mode: fetch real prices (Yahoo) and build, printing a
-# summary so we can confirm real data before wiring the daily Pages deploy.
+# Publishes the app to GitHub Pages and refreshes real end-of-day prices once a
+# day, so the hosted site stays current with no effort. GitHub's runners have
+# normal internet access, so the Yahoo Finance price fetch works here even
+# though a browser can't do it directly.
+#
+# Runs on a daily schedule and on manual trigger. (No push trigger, so it won't
+# deploy until Pages is enabled — see README "Hosting it online".)
 
 on:
+  schedule:
+    # ~06:40 UTC daily, after the previous US trading day has closed.
+    - cron: '40 6 * * *'
   workflow_dispatch: {}
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Fetch real end-of-day prices (£)
+        # If the data source hiccups, keep going and deploy with the prices
+        # already in the repo rather than failing the whole run.
         run: npm run refresh-prices
-      - name: Summarise prices.json
-        run: |
-          node -e '
-            const p = require("./src/data/prices.json");
-            const tk = Object.keys(p.series);
-            const last = (t) => p.series[t] ? p.series[t].at(-1) : "n/a";
-            console.log("real:", p.real, "| assets:", tk.length, "| days:", p.dates.length, "| latest:", p.dates.at(-1));
-            for (const t of ["AAPL","TSCO","NVDA","SP500","FTSE100","INDIA"]) console.log("  ", t, "=> £" + last(t));
-          '
+        continue-on-error: true
+
       - name: Build the site
         run: npm run build
         env:
+          # Served from https://<user>.github.io/Shyam-Project-One/
           VITE_BASE: /Shyam-Project-One/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the built site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

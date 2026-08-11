@@ -75,7 +75,7 @@ prices**, run:
 npm run refresh-prices
 ```
 
-This fetches real daily prices (from the free, no-key [Stooq](https://stooq.com) service),
+This fetches real daily prices (from Yahoo Finance's free, no-key chart endpoint),
 converts everything to **£**, and rewrites `prices.json`. Daily is plenty for a learning
 tool — you don't need live ticking prices.
 
@@ -93,6 +93,30 @@ from "Practice prices" to "Real market prices".
 
 > Note: prices are for **learning only**. This is not financial advice, and the app never
 > touches real money or a real brokerage.
+
+---
+
+## Hosting it online (auto-updating, no computer needed)
+
+The repo includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that publishes
+the app to **GitHub Pages** and refreshes real prices **once a day automatically** — so you
+just open a link and it stays current, with no computer running at home.
+
+One-time setup (two settings in your repo on github.com):
+
+1. **Make the repo public** (free Pages needs this; there are no secrets here — it's a
+   pretend-money learning app): _Settings → General → Danger Zone → Change visibility →
+   Public_. (Or keep it private if you have a paid GitHub plan.)
+2. **Turn on Pages**: _Settings → Pages → Build and deployment → Source → **GitHub Actions**_.
+
+Then run the workflow once (_Actions → Build & deploy Money Explorers → Run workflow_). After
+it finishes, your site is live at:
+
+```
+https://<your-username>.github.io/Shyam-Project-One/
+```
+
+It then rebuilds itself every day with fresh real prices. Nothing to install or maintain.
 
 ---
 

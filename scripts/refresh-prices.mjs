@@ -23,9 +23,15 @@ const RANGE = '2y'
 const cutoff = new Date()
 cutoff.setDate(cutoff.getDate() - 760)
 
+// A few symbols don't follow the simple rule (e.g. ASOS trades as ASC.L).
+const OVERRIDES = {
+  'asos.uk': 'ASC.L', // ASOS plc renamed its ticker to ASC
+}
+
 // Map our internal Stooq-style symbol (e.g. "tsco.uk", "aapl.us") to a Yahoo
 // symbol. London names use the ".L" suffix; US names are the bare ticker.
 function yahooSymbol(source) {
+  if (OVERRIDES[source]) return OVERRIDES[source]
   const dot = source.lastIndexOf('.')
   const base = (dot >= 0 ? source.slice(0, dot) : source).toUpperCase()
   const suffix = dot >= 0 ? source.slice(dot + 1) : ''
