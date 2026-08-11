@@ -2,15 +2,12 @@
 //
 //   npm run refresh-prices
 //
-// Run this on a machine with normal internet access (e.g. the family's home
-// computer or home server). Schedule it once a day with cron (macOS/Linux) or
-// Task Scheduler (Windows) to keep prices fresh — daily is plenty for learning.
-//
-// Data source: Stooq (https://stooq.com) free end-of-day CSV. No API key.
-// Everything is converted to GBP (£) so the whole app is single-currency.
+// Data source: Yahoo Finance's public chart endpoint (no API key). It works
+// from servers (e.g. GitHub Actions), covers US and London-listed names, and
+// reports each series' currency so we can convert everything to GBP (£).
 //
 // The app reads the resulting JSON directly — there are no network calls at
-// runtime, so nothing here needs to be secure or fast.
+// runtime, so nothing here needs to be fast or secure.
 
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -21,97 +18,87 @@ import { isoDate, round2 } from './_shared.mjs'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = resolve(__dirname, '../src/data/prices.json')
 
-const DAYS_BACK = 760 // ~2 years of calendar days
+const CHART = 'https://query1.finance.yahoo.com/v8/finance/chart/'
+const RANGE = '2y'
 const cutoff = new Date()
-cutoff.setDate(cutoff.getDate() - DAYS_BACK)
+cutoff.setDate(cutoff.getDate() - 760)
 
-// Which currency each source symbol is quoted in. Stooq US tickers are USD;
-// London (.uk) quotes in pence (GBX) for most shares but pounds for some ETFs.
-function sourceCurrency(source) {
-  if (source.endsWith('.uk')) return 'GBX' // pence — see auto-correction below
-  return 'USD'
+// Map our internal Stooq-style symbol (e.g. "tsco.uk", "aapl.us") to a Yahoo
+// symbol. London names use the ".L" suffix; US names are the bare ticker.
+function yahooSymbol(source) {
+  const dot = source.lastIndexOf('.')
+  const base = (dot >= 0 ? source.slice(0, dot) : source).toUpperCase()
+  const suffix = dot >= 0 ? source.slice(dot + 1) : ''
+  if (suffix === 'uk') return `${base}.L`
+  return base
 }
 
-async function fetchCsv(url) {
+async function fetchJson(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.text()
+  return res.json()
 }
 
-// Returns a Map<isoDate, closePrice> from a Stooq daily CSV.
-function parseStooq(csv) {
-  const out = new Map()
-  const lines = csv.trim().split(/\r?\n/)
-  if (lines.length < 2 || !/^Date,/i.test(lines[0])) return out
-  const header = lines[0].split(',')
-  const di = header.indexOf('Date')
-  const ci = header.indexOf('Close')
-  if (di < 0 || ci < 0) return out
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',')
-    const date = cols[di]
-    const close = Number(cols[ci])
-    if (date && Number.isFinite(close) && close > 0) out.set(date, close)
+// Returns { currency, points: Map<isoDate, closeInNativeCurrency> }.
+async function fetchChart(symbol) {
+  const json = await fetchJson(`${CHART}${encodeURIComponent(symbol)}?range=${RANGE}&interval=1d`)
+  const result = json?.chart?.result?.[0]
+  if (!result) throw new Error('no result')
+  const currency = result.meta?.currency ?? 'USD'
+  const stamps = result.timestamp ?? []
+  const closes = result.indicators?.quote?.[0]?.close ?? []
+  const points = new Map()
+  for (let i = 0; i < stamps.length; i++) {
+    const close = closes[i]
+    if (close == null || !Number.isFinite(close)) continue
+    const date = isoDate(new Date(stamps[i] * 1000))
+    if (new Date(date) < cutoff) continue
+    points.set(date, close)
   }
-  return out
+  return { currency, points }
 }
 
-async function stooqSeries(source) {
-  const csv = await fetchCsv(`https://stooq.com/q/d/l/?s=${encodeURIComponent(source)}&i=d`)
-  return parseStooq(csv)
-}
-
-// --- FX: fetch GBP per 1 USD (Stooq gives USDGBP as GBP per USD). ------------
-async function fetchFxUsdToGbp() {
+// £ per 1 unit of a currency. We only need USD (everything else is already GBP
+// or GBP pence), but this is written generally in case the universe grows.
+async function gbpConverters() {
+  const conv = { GBP: 1, GBX: 0.01, GBp: 0.01 }
   try {
-    const m = await stooqSeries('usdgbp')
-    const last = [...m.values()].at(-1)
-    if (last && last > 0.3 && last < 1.2) return last
+    const { points } = await fetchChart('GBPUSD=X') // USD per 1 GBP
+    const usdPerGbp = [...points.values()].at(-1)
+    if (usdPerGbp && usdPerGbp > 0.5 && usdPerGbp < 2) conv.USD = 1 / usdPerGbp
   } catch {
-    /* fall through */
+    /* fall through to fallback */
   }
-  console.warn('  ! Could not fetch USD→GBP FX, using fallback 0.79')
-  return 0.79
+  if (!conv.USD) {
+    console.warn('  ! Could not fetch GBP/USD, using fallback 0.79')
+    conv.USD = 0.79
+  }
+  return conv
 }
 
 async function main() {
-  console.log('Fetching real end-of-day prices from Stooq (this may take a minute)…')
-  const usdToGbp = await fetchFxUsdToGbp()
-  console.log(`  USD→GBP = ${usdToGbp}`)
+  console.log('Fetching real end-of-day prices from Yahoo Finance…')
+  const conv = await gbpConverters()
+  console.log(`  £ per $1 = ${conv.USD.toFixed(4)}`)
 
   const raw = {} // ticker -> Map<date, gbpClose>
   const allDates = new Set()
 
   for (const asset of UNIVERSE) {
     try {
-      const m = await stooqSeries(asset.source)
-      if (m.size === 0) throw new Error('empty/blocked')
-
-      const cur = sourceCurrency(asset.source)
+      const { currency, points } = await fetchChart(yahooSymbol(asset.source))
+      if (points.size === 0) throw new Error('empty')
+      const rate = conv[currency]
+      if (rate == null) throw new Error(`unhandled currency ${currency}`)
       const gbp = new Map()
-      for (const [date, close] of m) {
-        if (new Date(date) < cutoff) continue
-        let v = close
-        if (cur === 'USD') v = close * usdToGbp
-        else if (cur === 'GBX') v = close / 100 // pence → pounds
-        gbp.set(date, v)
-      }
-
-      // Sanity check against the reference price: if a London ETF was actually
-      // quoted in pounds (not pence), values will be ~100x too small — undo it.
-      const latest = [...gbp.values()].at(-1)
-      if (latest && asset.seedPrice > 0) {
-        const ratio = latest / asset.seedPrice
-        if (ratio < 0.02) for (const [d, v] of gbp) gbp.set(d, v * 100)
-      }
-
+      for (const [date, close] of points) gbp.set(date, close * rate)
       raw[asset.ticker] = gbp
       for (const d of gbp.keys()) allDates.add(d)
       process.stdout.write('.')
     } catch (err) {
-      console.warn(`\n  ! ${asset.ticker} (${asset.source}): ${err.message} — skipping`)
+      console.warn(`\n  ! ${asset.ticker} (${asset.source} → ${yahooSymbol(asset.source)}): ${err.message} — skipping`)
     }
-    await new Promise((r) => setTimeout(r, 120)) // be polite to the server
+    await new Promise((r) => setTimeout(r, 120)) // be polite
   }
   console.log('')
 
@@ -134,7 +121,6 @@ async function main() {
       if (m.has(d)) last = m.get(d)
       arr.push(last == null ? null : round2(last))
     }
-    // Back-fill any leading nulls with the first known value.
     const firstKnown = arr.find((v) => v != null)
     for (let i = 0; i < arr.length && arr[i] == null; i++) arr[i] = firstKnown ?? asset.seedPrice
     series[asset.ticker] = arr
@@ -144,11 +130,9 @@ async function main() {
   const payload = { generatedAt: new Date().toISOString(), real: true, currency: 'GBP', dates, series }
   writeFileSync(OUT, JSON.stringify(payload) + '\n')
   console.log(`Done. Real prices for ${ok}/${UNIVERSE.length} assets, ${dates.length} days.`)
-  console.log(`Latest trading day: ${dates.at(-1)} (as of ${isoDate(new Date())}).`)
+  console.log(`Latest trading day in data: ${dates.at(-1)}.`)
   if (ok < UNIVERSE.length) {
-    console.log('Some assets were skipped (symbol not found or temporarily blocked).')
-    console.log('The app hides assets with no price data and keeps working normally.')
-    console.log('Re-run later to pick them up.')
+    console.log('Some assets were skipped (symbol not found). The app hides those and keeps working.')
   }
 }
 

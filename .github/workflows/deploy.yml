@@ -1,8 +1,7 @@
 name: Build & deploy Money Explorers
 
-# TEMPORARY diagnostic mode: manual-only, no schedule, no deploy. We're checking
-# which real price sources are reachable from GitHub's runners before wiring the
-# full daily deploy back up.
+# Manual verification mode: fetch real prices (Yahoo) and build, printing a
+# summary so we can confirm real data before wiring the daily Pages deploy.
 
 on:
   workflow_dispatch: {}
@@ -11,20 +10,27 @@ permissions:
   contents: read
 
 jobs:
-  probe:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe candidate price sources
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Fetch real end-of-day prices (£)
+        run: npm run refresh-prices
+      - name: Summarise prices.json
         run: |
-          set +e
-          probe() {
-            echo "==== $1 ===="
-            code=$(curl -sS -A "Mozilla/5.0" -o /tmp/out -w "%{http_code}" --max-time 20 "$2")
-            echo "HTTP $code  ($(wc -c </tmp/out) bytes)"
-            head -c 240 /tmp/out; echo; echo
-          }
-          probe "Stooq US (aapl.us)" "https://stooq.com/q/d/l/?s=aapl.us&i=d"
-          probe "Yahoo chart AAPL"   "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1mo&interval=1d"
-          probe "Yahoo chart TSCO.L" "https://query1.finance.yahoo.com/v8/finance/chart/TSCO.L?range=1mo&interval=1d"
-          probe "Yahoo FX GBPUSD"    "https://query1.finance.yahoo.com/v8/finance/chart/GBPUSD=X?range=5d&interval=1d"
-          probe "Stooq FX (usdgbp)"  "https://stooq.com/q/d/l/?s=usdgbp&i=d"
+          node -e '
+            const p = require("./src/data/prices.json");
+            const tk = Object.keys(p.series);
+            const last = (t) => p.series[t] ? p.series[t].at(-1) : "n/a";
+            console.log("real:", p.real, "| assets:", tk.length, "| days:", p.dates.length, "| latest:", p.dates.at(-1));
+            for (const t of ["AAPL","TSCO","NVDA","SP500","FTSE100","INDIA"]) console.log("  ", t, "=> £" + last(t));
+          '
+      - name: Build the site
+        run: npm run build
+        env:
+          VITE_BASE: /Shyam-Project-One/
