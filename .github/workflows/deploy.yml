@@ -1,0 +1,70 @@
+name: Build & deploy Money Explorers
+
+# Publishes the app to GitHub Pages, and refreshes real end-of-day prices once
+# a day so the hosted site stays current with no effort. GitHub's runners have
+# normal internet access, so the price fetch works here even though a browser
+# can't do it directly.
+
+on:
+  push:
+    branches: [claude/kids-investing-dashboard-9bwfks]
+  schedule:
+    # ~06:40 UTC daily — after the previous US trading day has closed.
+    - cron: '40 6 * * *'
+  workflow_dispatch: {}
+
+# Least-privilege permissions needed to deploy to Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time; newer runs supersede older queued ones.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch real end-of-day prices (£)
+        # If the data source is briefly unavailable, keep going and deploy with
+        # the prices already in the repo rather than failing the whole run.
+        run: npm run refresh-prices
+        continue-on-error: true
+
+      - name: Build the site
+        run: npm run build
+        env:
+          # Served from https://<user>.github.io/Shyam-Project-One/
+          VITE_BASE: /Shyam-Project-One/
+
+      - name: Configure GitHub Pages (auto-enable on first run)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload the built site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
