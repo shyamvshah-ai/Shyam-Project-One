@@ -146,3 +146,24 @@ export function valueHistory(kid: KidProfile): ValuePoint[] {
   }
   return out
 }
+
+/**
+ * Worth of what the child holds *right now*, valued across the last `days`
+ * trading days (0 = all history), plus their current cash. This always shows
+ * real movement once they own something — unlike the trade-log reconstruction,
+ * which can't curve when every trade happened on the same latest price date.
+ * The `deposited` field is a flat reference line ("money paid in").
+ */
+export function currentWorthHistory(kid: KidProfile, days: number): ValuePoint[] {
+  if (kid.holdings.length === 0) return []
+  const dates = days > 0 ? ALL_DATES.slice(-days) : ALL_DATES
+  const deposited = kid.deposits.reduce((s, d) => s + d.amount, 0)
+  return dates.map((date) => {
+    let holdingsValue = 0
+    for (const h of kid.holdings) {
+      const p = priceOn(h.ticker, date)
+      if (p !== undefined) holdingsValue += p * h.shares
+    }
+    return { date, value: kid.cash + holdingsValue, deposited }
+  })
+}

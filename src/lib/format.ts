@@ -62,3 +62,18 @@ export function direction(n: number): 'up' | 'down' | 'flat' {
   if (n < 0) return 'down'
   return 'flat'
 }
+
+/** Today's real calendar date as an ISO string (used for the weekly streak). */
+export function todayISO(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+/** A whole-number week counter, so we can tell consecutive weeks apart. */
+export function weekIndex(iso: string): number {
+  return Math.floor(new Date(iso + 'T00:00:00Z').getTime() / (7 * 86_400_000))
+}
+
+/** Has the child already checked in during the current calendar week? */
+export function isThisWeek(iso: string | null): boolean {
+  return iso != null && weekIndex(iso) === weekIndex(todayISO())
+}

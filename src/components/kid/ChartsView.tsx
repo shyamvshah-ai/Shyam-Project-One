@@ -11,15 +11,18 @@ import {
   YAxis,
 } from 'recharts'
 import type { KidProfile } from '../../types'
-import { valueHistory } from '../../lib/portfolio'
+import { currentWorthHistory } from '../../lib/portfolio'
 import { priceHistory } from '../../lib/prices'
 import { getAsset } from '../../data/universe'
 import { money, moneyExact, percent, shortDate } from '../../lib/format'
 import { Card, SectionTitle } from '../common/ui'
 
-// "Charts" — see how the whole portfolio has grown, and each holding's price.
+// "Charts" — how the whole portfolio has grown, and each holding's price.
+// A time-range toggle controls both charts; the vertical axis auto-zooms so
+// movement is easy to see (not a flat line filling the box).
 
 const RANGES = [
+  { label: '1W', days: 5 },
   { label: '1M', days: 21 },
   { label: '3M', days: 63 },
   { label: '1Y', days: 252 },
@@ -27,10 +30,13 @@ const RANGES = [
 ]
 
 export default function ChartsView({ kid, detailed }: { kid: KidProfile; detailed: boolean }) {
-  const history = useMemo(() => valueHistory(kid), [kid])
   const owned = kid.holdings.map((h) => h.ticker)
   const [ticker, setTicker] = useState<string>(owned[0] ?? '')
-  const [rangeIdx, setRangeIdx] = useState(detailed ? 3 : 1)
+  const [rangeIdx, setRangeIdx] = useState(2) // default 3M
+
+  const days = RANGES[rangeIdx].days
+  const history = useMemo(() => currentWorthHistory(kid, days), [kid, days])
+  const hasHoldings = kid.holdings.length > 0
 
   const first = history[0]?.value ?? 0
   const last = history[history.length - 1]?.value ?? 0
@@ -39,10 +45,28 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
 
   return (
     <div className="space-y-4">
+      {/* Shared time-range toggle */}
+      <div className="flex justify-center gap-1">
+        {RANGES.map((r, i) => (
+          <button
+            key={r.label}
+            onClick={() => setRangeIdx(i)}
+            className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
+              rangeIdx === i ? 'bg-indigo-900 text-white shadow-sm' : 'bg-white text-indigo-500'
+            }`}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+
       <Card>
-        <SectionTitle>Your money over time</SectionTitle>
-        {history.length < 2 ? (
-          <p className="text-indigo-500">Make a few trades and check back to watch your line grow!</p>
+        <SectionTitle>Your investments over time</SectionTitle>
+        {!hasHoldings ? (
+          <p className="text-indigo-500">
+            You’re starting fresh with {money(kid.cash)}! Buy your first investment and this chart
+            will show how it moves up and down over time.
+          </p>
         ) : (
           <>
             <div className="mb-2 flex items-baseline gap-2">
@@ -50,13 +74,14 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
               <span className={`font-semibold ${change >= 0 ? 'text-up' : 'text-down'}`}>
                 {change >= 0 ? '▲' : '▼'} {money(Math.abs(change))} ({percent(changePct)})
               </span>
+              <span className="text-sm text-indigo-300">over {RANGES[rangeIdx].label}</span>
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={history} margin={{ top: 5, right: 5, left: -18, bottom: 0 }}>
                 <defs>
                   <linearGradient id="val" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eef" />
@@ -67,6 +92,7 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
                   tick={{ fontSize: 11, fill: '#94a3b8' }}
                 />
                 <YAxis
+                  domain={['auto', 'auto']}
                   tickFormatter={(v) => money(v)}
                   width={64}
                   tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -89,6 +115,7 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
                   stroke="#4f46e5"
                   strokeWidth={3}
                   fill="url(#val)"
+                  baseValue="dataMin"
                   name="What it's worth"
                 />
               </AreaChart>
@@ -125,24 +152,7 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
                 )
               })}
             </div>
-
-            {detailed && (
-              <div className="mb-2 flex gap-1">
-                {RANGES.map((r, i) => (
-                  <button
-                    key={r.label}
-                    onClick={() => setRangeIdx(i)}
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                      rangeIdx === i ? 'bg-indigo-900 text-white' : 'bg-indigo-50 text-indigo-500'
-                    }`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <HoldingChart ticker={ticker} days={detailed ? RANGES[rangeIdx].days : 90} />
+            <HoldingChart ticker={ticker} days={days} />
           </>
         )}
       </Card>

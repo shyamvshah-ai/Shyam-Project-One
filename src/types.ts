@@ -85,6 +85,19 @@ export interface Holding {
 
 export type ViewMode = 'simple' | 'detailed'
 
+/** When a badge was first earned. Badges are permanent once earned. */
+export interface BadgeState {
+  earnedAt: string // ISO date
+}
+
+/** Weekly "checked in this week" streak — rewards patience, not day-trading. */
+export interface Streak {
+  /** ISO date of the most recent check-in, or null if never. */
+  lastCheckIn: string | null
+  /** How many weeks in a row they've checked in. */
+  weeks: number
+}
+
 /** A child's account. */
 export interface KidProfile {
   id: 'sai' | 'leila'
@@ -97,6 +110,10 @@ export interface KidProfile {
   trades: Trade[]
   deposits: Deposit[]
   viewMode: ViewMode
+  /** Earned badges, keyed by badge id. Once earned, never removed. */
+  badges: Record<string, BadgeState>
+  /** Weekly check-in streak. */
+  streak: Streak
   /** Weekly virtual allowance settings (paid in by the parent). */
   allowance: {
     amount: number

@@ -5,15 +5,17 @@ import PortfolioView from './PortfolioView'
 import ExploreView from './ExploreView'
 import ChartsView from './ChartsView'
 import JournalView from './JournalView'
+import RewardsView from './RewardsView'
 import TradeModal from './TradeModal'
 
-type Tab = 'money' | 'explore' | 'charts' | 'journal'
+type Tab = 'money' | 'explore' | 'charts' | 'journal' | 'fun'
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'money', label: 'My Money', emoji: '💰' },
   { id: 'explore', label: 'Explore', emoji: '🔭' },
   { id: 'charts', label: 'Charts', emoji: '📈' },
   { id: 'journal', label: 'Diary', emoji: '📔' },
+  { id: 'fun', label: 'Fun', emoji: '🏆' },
 ]
 
 export interface TradeRequest {
@@ -55,6 +57,7 @@ export default function KidDashboard({ kidId }: { kidId: 'sai' | 'leila' }) {
         {tab === 'explore' && <ExploreView kid={kid} detailed={detailed} onTrade={openTrade} />}
         {tab === 'charts' && <ChartsView kid={kid} detailed={detailed} />}
         {tab === 'journal' && <JournalView kid={kid} />}
+        {tab === 'fun' && <RewardsView kid={kid} detailed={detailed} />}
       </main>
 
       {/* Bottom tab bar — big, thumb-friendly targets. */}
