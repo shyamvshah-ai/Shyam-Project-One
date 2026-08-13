@@ -28,9 +28,7 @@ const DOMAINS: Record<string, string> = {
   BRBY: 'burberry.com',
   TSCO: 'tesco.com',
   GAW: 'games-workshop.com',
-  OCDO: 'ocado.com',
   RR: 'rolls-royce.com',
-  LVMH: 'lvmh.com',
   ADDYY: 'adidas.com',
   NSRGY: 'nestle.com',
   PG: 'pg.com',
@@ -39,6 +37,10 @@ const DOMAINS: Record<string, string> = {
   LULU: 'lululemon.com',
   MCDL: 'marriott.com',
   LEGOTOY: 'hasbro.com',
+  SAMSUNG: 'samsung.com',
+  EZJ: 'easyjet.com',
+  SBRY: 'sainsburys.co.uk',
+  MKS: 'marksandspencer.com',
 }
 
 // Try a real logo first, then a favicon service, then give up (→ emoji).

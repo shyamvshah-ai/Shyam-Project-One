@@ -128,22 +128,10 @@ export const STOCKS: Asset[] = [
     detail: { peRatio: 25, marketCapB: 3.5, dividendYield: 0.035, revenueGrowth: 0.1 },
   },
   {
-    ticker: 'OCDO', source: 'ocdo.uk', name: 'Ocado', kind: 'stock',
-    sector: 'Shopping', geography: 'UK', emoji: '🤖', seedPrice: 4,
-    blurb: 'An online supermarket that uses robots in giant warehouses to pack grocery orders.',
-    detail: { peRatio: 0, marketCapB: 3, dividendYield: 0, revenueGrowth: 0.09 },
-  },
-  {
     ticker: 'RR', source: 'rr.uk', name: 'Rolls-Royce', kind: 'stock',
     sector: 'Engineering', geography: 'UK', emoji: '✈️', seedPrice: 4,
     blurb: 'Builds the huge engines that power aeroplanes (not the cars — that’s a different company now).',
     detail: { peRatio: 20, marketCapB: 34, dividendYield: 0, revenueGrowth: 0.16 },
-  },
-  {
-    ticker: 'LVMH', source: 'lvmuy.us', name: 'LVMH', kind: 'stock',
-    sector: 'Luxury', geography: 'France', emoji: '👜', seedPrice: 130,
-    blurb: 'A French group that owns lots of luxury brands like Louis Vuitton, Dior and TAG Heuer watches.',
-    detail: { peRatio: 24, marketCapB: 360, dividendYield: 0.017, revenueGrowth: 0.09 },
   },
   {
     ticker: 'ADDYY', source: 'addyy.us', name: 'Adidas', kind: 'stock',
@@ -193,6 +181,30 @@ export const STOCKS: Asset[] = [
     blurb: 'A big toy and games company behind Monopoly, Nerf, Play-Doh and Transformers.',
     detail: { peRatio: 18, marketCapB: 8, dividendYield: 0.045, revenueGrowth: -0.02 },
   },
+  {
+    ticker: 'SAMSUNG', source: 'samsung.kr', name: 'Samsung', kind: 'stock',
+    sector: 'Technology', geography: 'South Korea', emoji: '📱', seedPrice: 45,
+    blurb: 'A South Korean tech giant — makes Galaxy phones, TVs, and the memory chips inside loads of gadgets.',
+    detail: { peRatio: 12, marketCapB: 300, dividendYield: 0.02, revenueGrowth: 0.05 },
+  },
+  {
+    ticker: 'EZJ', source: 'ezj.uk', name: 'easyJet', kind: 'stock',
+    sector: 'Travel', geography: 'UK', emoji: '🛫', seedPrice: 5,
+    blurb: 'A low-cost airline that flies people around the UK and Europe on its bright orange planes.',
+    detail: { peRatio: 10, marketCapB: 4, dividendYield: 0.02, revenueGrowth: 0.1 },
+  },
+  {
+    ticker: 'SBRY', source: 'sbry.uk', name: "Sainsbury's", kind: 'stock',
+    sector: 'Shopping', geography: 'UK', emoji: '🥫', seedPrice: 2.7,
+    blurb: 'One of the UK’s biggest supermarkets, selling food, clothes (Tu) and homeware (Argos).',
+    detail: { peRatio: 12, marketCapB: 7, dividendYield: 0.045, revenueGrowth: 0.04 },
+  },
+  {
+    ticker: 'MKS', source: 'mks.uk', name: 'Marks & Spencer', kind: 'stock',
+    sector: 'Shopping', geography: 'UK', emoji: '👗', seedPrice: 3.5,
+    blurb: 'A classic British shop known for clothes, homeware and its popular M&S food halls.',
+    detail: { peRatio: 11, marketCapB: 7, dividendYield: 0.02, revenueGrowth: 0.08 },
+  },
 ]
 
 export const ETFS: Asset[] = [
@@ -207,12 +219,6 @@ export const ETFS: Asset[] = [
     sector: 'Broad Market', geography: 'UK', emoji: '🇬🇧', seedPrice: 8,
     blurb: 'A slice of the 100 biggest companies listed in London — banks, oil, shops and more.',
     detail: { dividendYield: 0.038 },
-  },
-  {
-    ticker: 'WORLD', source: 'vt.us', name: 'Whole World', kind: 'etf',
-    sector: 'Broad Market', geography: 'Global', emoji: '🌍', seedPrice: 95,
-    blurb: 'A tiny piece of thousands of companies all around the world in one go — the ultimate spread-out fund.',
-    detail: { dividendYield: 0.02 },
   },
   {
     ticker: 'INDIA', source: 'inda.us', name: 'India', kind: 'etf',
@@ -239,10 +245,16 @@ export const ETFS: Asset[] = [
     detail: { dividendYield: 0.03 },
   },
   {
-    ticker: 'EMKT', source: 'eem.us', name: 'Emerging Markets', kind: 'etf',
-    sector: 'Region', geography: 'Global', emoji: '🌱', seedPrice: 40,
-    blurb: 'Fast-growing but riskier countries like India, Brazil and Indonesia, all in one fund.',
-    detail: { dividendYield: 0.023 },
+    ticker: 'LATAM', source: 'ilf.us', name: 'Latin America', kind: 'etf',
+    sector: 'Region', geography: 'Latin America', emoji: '🌎', seedPrice: 20,
+    blurb: 'Big companies from Latin America — countries like Brazil, Mexico and Chile.',
+    detail: { dividendYield: 0.05 },
+  },
+  {
+    ticker: 'AFRICA', source: 'afk.us', name: 'Africa', kind: 'etf',
+    sector: 'Region', geography: 'Africa', emoji: '🌍', seedPrice: 15,
+    blurb: 'Companies from across Africa — a young, fast-growing continent (mostly South Africa, Nigeria and Kenya).',
+    detail: { dividendYield: 0.03 },
   },
   {
     ticker: 'SEMI', source: 'soxx.us', name: 'Semiconductors (Chips)', kind: 'etf',
@@ -251,10 +263,16 @@ export const ETFS: Asset[] = [
     detail: { dividendYield: 0.007 },
   },
   {
-    ticker: 'ROBO', source: 'botz.us', name: 'Robots & AI', kind: 'etf',
-    sector: 'Technology', geography: 'Global', emoji: '🦾', seedPrice: 30,
-    blurb: 'Companies building robots and artificial intelligence — a bet on the future of automation.',
+    ticker: 'ROBOTICS', source: 'robo.us', name: 'Robotics', kind: 'etf',
+    sector: 'Technology', geography: 'Global', emoji: '🦾', seedPrice: 45,
+    blurb: 'Companies that build robots and automation machines for factories, warehouses and hospitals.',
     detail: { dividendYield: 0.004 },
+  },
+  {
+    ticker: 'AI', source: 'aiq.us', name: 'Artificial Intelligence', kind: 'etf',
+    sector: 'Technology', geography: 'Global', emoji: '🤖', seedPrice: 30,
+    blurb: 'Companies leading in artificial intelligence — the tech behind chatbots, self-driving cars and smart assistants.',
+    detail: { dividendYield: 0.002 },
   },
   {
     ticker: 'CYBER', source: 'cibr.us', name: 'Cybersecurity', kind: 'etf',
@@ -281,9 +299,9 @@ export const ETFS: Asset[] = [
     detail: { dividendYield: 0.006 },
   },
   {
-    ticker: 'LUXURY', source: 'glux.uk', name: 'Luxury Goods', kind: 'etf',
-    sector: 'Luxury', geography: 'Global', emoji: '💎', seedPrice: 30,
-    blurb: 'A fund of posh brands — designer handbags, watches and cars.',
+    ticker: 'LUXURY', source: 'lux.us', name: 'Luxury Goods', kind: 'etf',
+    sector: 'Luxury', geography: 'Global', emoji: '💎', seedPrice: 25,
+    blurb: 'A fund of posh brands — designer fashion, watches and jewellery.',
     detail: { dividendYield: 0.012 },
   },
   {
@@ -293,28 +311,22 @@ export const ETFS: Asset[] = [
     detail: { dividendYield: 0.015 },
   },
   {
-    ticker: 'WATER', source: 'pho.us', name: 'Water', kind: 'etf',
-    sector: 'Utilities', geography: 'Global', emoji: '💧', seedPrice: 60,
-    blurb: 'Companies that clean, move and supply water — something everyone needs every day.',
-    detail: { dividendYield: 0.006 },
-  },
-  {
     ticker: 'GOLD', source: 'gld.us', name: 'Gold', kind: 'etf',
     sector: 'Commodity', geography: 'Global', emoji: '🥇', seedPrice: 175,
     blurb: 'Tracks the price of gold. People often buy it when they’re nervous about other investments.',
     detail: { dividendYield: 0 },
   },
   {
-    ticker: 'SPACE', source: 'ufo.us', name: 'Space & Defence', kind: 'etf',
-    sector: 'Engineering', geography: 'Global', emoji: '🚀', seedPrice: 25,
+    ticker: 'SPACE', source: 'ufo.us', name: 'Space', kind: 'etf',
+    sector: 'Space', geography: 'Global', emoji: '🚀', seedPrice: 25,
     blurb: 'Companies building rockets, satellites and space technology.',
     detail: { dividendYield: 0.008 },
   },
   {
-    ticker: 'DIVID', source: 'vig.us', name: 'Dividend Payers', kind: 'etf',
-    sector: 'Broad Market', geography: 'USA', emoji: '💷', seedPrice: 165,
-    blurb: 'Solid companies that share their profits with owners as regular cash payments (dividends).',
-    detail: { dividendYield: 0.019 },
+    ticker: 'DEFENCE', source: 'ita.us', name: 'Defence', kind: 'etf',
+    sector: 'Defence', geography: 'USA', emoji: '🛩️', seedPrice: 110,
+    blurb: 'Companies that make aircraft, ships and equipment for a country’s armed forces.',
+    detail: { dividendYield: 0.01 },
   },
 ]
 

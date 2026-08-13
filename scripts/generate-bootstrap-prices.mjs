@@ -33,6 +33,7 @@ function localFor(asset, gbpPrice) {
     if (asset.kind === 'etf') return { currency: 'GBP', price: round2(gbpPrice) }
     return { currency: 'GBp', price: round2(gbpPrice * 100) }
   }
+  if (suffix === 'kr') return { currency: 'KRW', price: Math.round(gbpPrice * 1700) }
   return { currency: 'USD', price: round2(gbpPrice / GBP_PER_USD) }
 }
 

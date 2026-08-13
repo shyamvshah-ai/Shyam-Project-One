@@ -26,6 +26,7 @@ cutoff.setDate(cutoff.getDate() - 760)
 // A few symbols don't follow the simple rule (e.g. ASOS trades as ASC.L).
 const OVERRIDES = {
   'asos.uk': 'ASC.L', // ASOS plc renamed its ticker to ASC
+  'samsung.kr': '005930.KS', // Samsung Electronics, Korea listing (KRW)
 }
 
 // Map our internal Stooq-style symbol (e.g. "tsco.uk", "aapl.us") to a Yahoo
@@ -64,28 +65,30 @@ async function fetchChart(symbol) {
   return { currency, points }
 }
 
-// £ per 1 unit of a currency. We only need USD (everything else is already GBP
-// or GBP pence), but this is written generally in case the universe grows.
-async function gbpConverters() {
-  const conv = { GBP: 1, GBX: 0.01, GBp: 0.01 }
-  try {
-    const { points } = await fetchChart('GBPUSD=X') // USD per 1 GBP
-    const usdPerGbp = [...points.values()].at(-1)
-    if (usdPerGbp && usdPerGbp > 0.5 && usdPerGbp < 2) conv.USD = 1 / usdPerGbp
-  } catch {
-    /* fall through to fallback */
+// Returns £ per 1 unit of any currency, fetching + caching FX rates as needed
+// (so London pence, US dollars, Korean won, euros, etc. all convert to £).
+function makeFxToGbp() {
+  const cache = { GBP: 1, GBX: 0.01, GBp: 0.01 }
+  return async function toGbp(currency) {
+    if (cache[currency] !== undefined) return cache[currency]
+    try {
+      // Yahoo "GBP{cur}=X" = units of {cur} per 1 GBP; we want £ per 1 {cur}.
+      const { points } = await fetchChart(`GBP${currency}=X`)
+      const perGbp = [...points.values()].at(-1)
+      if (perGbp && perGbp > 0) return (cache[currency] = 1 / perGbp)
+    } catch {
+      /* fall through */
+    }
+    console.warn(`  ! No FX rate for ${currency} — affected assets skipped`)
+    return (cache[currency] = null)
   }
-  if (!conv.USD) {
-    console.warn('  ! Could not fetch GBP/USD, using fallback 0.79')
-    conv.USD = 0.79
-  }
-  return conv
 }
 
 async function main() {
   console.log('Fetching real end-of-day prices from Yahoo Finance…')
-  const conv = await gbpConverters()
-  console.log(`  £ per $1 = ${conv.USD.toFixed(4)}`)
+  const fxToGbp = makeFxToGbp()
+  const usdRate = await fxToGbp('USD')
+  console.log(`  £ per $1 = ${usdRate ? usdRate.toFixed(4) : 'n/a'}`)
 
   const raw = {} // ticker -> Map<date, gbpClose>
   const local = {} // ticker -> { currency, price } in the asset's own currency
@@ -95,8 +98,8 @@ async function main() {
     try {
       const { currency, points } = await fetchChart(yahooSymbol(asset.source))
       if (points.size === 0) throw new Error('empty')
-      const rate = conv[currency]
-      if (rate == null) throw new Error(`unhandled currency ${currency}`)
+      const rate = await fxToGbp(currency)
+      if (rate == null) throw new Error(`no FX for ${currency}`)
       const gbp = new Map()
       for (const [date, close] of points) gbp.set(date, close * rate)
       raw[asset.ticker] = gbp

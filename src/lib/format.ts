@@ -70,6 +70,8 @@ export function localMoney(currency: string, price: number): string {
       return `${Math.round(price)}p`
     case 'JPY':
       return `¥${Math.round(price)}`
+    case 'KRW':
+      return `₩${Math.round(price).toLocaleString('en-GB')}`
     case 'CHF':
       return `CHF ${price.toFixed(2)}`
     default:
