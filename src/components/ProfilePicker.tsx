@@ -3,6 +3,7 @@ import { useStore } from '../state/store'
 import { portfolioSummary } from '../lib/portfolio'
 import { money } from '../lib/format'
 import { PRICES_ARE_REAL } from '../lib/prices'
+import BrandMark from './common/BrandMark'
 
 // The landing screen: "Who's exploring today?" — three big, friendly cards.
 
@@ -13,7 +14,9 @@ export default function ProfilePicker({ onPick }: { onPick: (id: ProfileId) => v
 
   return (
     <div className="mx-auto flex min-h-full max-w-3xl flex-col items-center justify-center px-4 py-10">
-      <div className="mb-2 text-5xl">🚀</div>
+      <div className="mb-3">
+        <BrandMark size={64} />
+      </div>
       <h1 className="text-center text-3xl font-extrabold text-ink sm:text-4xl">
         Junior Traders
       </h1>

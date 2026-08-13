@@ -38,8 +38,9 @@ export default {
         },
       },
       fontFamily: {
-        // Crisp modern grotesk via the system stack (no web-font download).
+        // Sora — a modern geometric grotesk (bundled via @fontsource).
         sans: [
+          'Sora',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',

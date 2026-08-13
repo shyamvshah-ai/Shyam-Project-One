@@ -1,4 +1,4 @@
-# 🚀 Junior Traders — Kids' Investing Dashboard
+# 📈 Junior Traders — Kids' Investing Dashboard
 
 A friendly, game-like app that teaches **Sai (10)** and **Leila (13)** the basics of
 investing using **pretend money**. There is no real brokerage, no real money, and nothing
