@@ -41,6 +41,11 @@ const DOMAINS: Record<string, string> = {
   EZJ: 'easyjet.com',
   SBRY: 'sainsburys.co.uk',
   MKS: 'marksandspencer.com',
+  RBLX: 'roblox.com',
+  CROX: 'crocs.com',
+  RACE: 'ferrari.com',
+  MAT: 'mattel.com',
+  DUOL: 'duolingo.com',
 }
 
 // Try a real logo first, then a favicon service, then give up (→ emoji).

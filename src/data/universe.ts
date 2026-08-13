@@ -205,6 +205,36 @@ export const STOCKS: Asset[] = [
     blurb: 'A classic British shop known for clothes, homeware and its popular M&S food halls.',
     detail: { peRatio: 11, marketCapB: 7, dividendYield: 0.02, revenueGrowth: 0.08 },
   },
+  {
+    ticker: 'RBLX', source: 'rblx.us', name: 'Roblox', kind: 'stock',
+    sector: 'Video Games', geography: 'USA', emoji: '🧱', seedPrice: 50,
+    blurb: 'The online world where millions of kids play — and build — their own games.',
+    detail: { peRatio: 0, marketCapB: 40, dividendYield: 0, revenueGrowth: 0.25 },
+  },
+  {
+    ticker: 'CROX', source: 'crox.us', name: 'Crocs', kind: 'stock',
+    sector: 'Clothes & Shoes', geography: 'USA', emoji: '🐊', seedPrice: 90,
+    blurb: 'Makes the comfy foam clogs (and the little Jibbitz charms) that are all over kids’ feet.',
+    detail: { peRatio: 8, marketCapB: 6, dividendYield: 0, revenueGrowth: 0.05 },
+  },
+  {
+    ticker: 'RACE', source: 'race.us', name: 'Ferrari', kind: 'stock',
+    sector: 'Cars', geography: 'Italy', emoji: '🏎️', seedPrice: 350,
+    blurb: 'The Italian maker of super-fast, super-expensive sports cars — few are made, each sells for a lot.',
+    detail: { peRatio: 50, marketCapB: 80, dividendYield: 0.006, revenueGrowth: 0.1 },
+  },
+  {
+    ticker: 'MAT', source: 'mat.us', name: 'Mattel', kind: 'stock',
+    sector: 'Toys & Games', geography: 'USA', emoji: '🎀', seedPrice: 15,
+    blurb: 'The toy giant behind Barbie, Hot Wheels, UNO and Fisher-Price.',
+    detail: { peRatio: 15, marketCapB: 6, dividendYield: 0, revenueGrowth: 0.02 },
+  },
+  {
+    ticker: 'DUOL', source: 'duol.us', name: 'Duolingo', kind: 'stock',
+    sector: 'Technology', geography: 'USA', emoji: '🦉', seedPrice: 300,
+    blurb: 'The green-owl app that turns learning a language into a game, with streaks and points.',
+    detail: { peRatio: 200, marketCapB: 15, dividendYield: 0, revenueGrowth: 0.4 },
+  },
 ]
 
 export const ETFS: Asset[] = [
@@ -219,6 +249,12 @@ export const ETFS: Asset[] = [
     sector: 'Broad Market', geography: 'UK', emoji: '🇬🇧', seedPrice: 8,
     blurb: 'A slice of the 100 biggest companies listed in London — banks, oil, shops and more.',
     detail: { dividendYield: 0.038 },
+  },
+  {
+    ticker: 'WORLD', source: 'vt.us', name: 'Whole World', kind: 'etf',
+    sector: 'Broad Market', geography: 'Global', emoji: '🌐', seedPrice: 95,
+    blurb: 'A tiny piece of thousands of companies all around the world in one go — the ultimate "own everything" fund.',
+    detail: { dividendYield: 0.02 },
   },
   {
     ticker: 'INDIA', source: 'inda.us', name: 'India', kind: 'etf',
