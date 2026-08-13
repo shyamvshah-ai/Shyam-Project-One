@@ -14,11 +14,11 @@ export default function ProfilePicker({ onPick }: { onPick: (id: ProfileId) => v
   return (
     <div className="mx-auto flex min-h-full max-w-3xl flex-col items-center justify-center px-4 py-10">
       <div className="mb-2 text-5xl">🚀</div>
-      <h1 className="text-center text-3xl font-extrabold text-indigo-900 sm:text-4xl">
-        Money Explorers
+      <h1 className="text-center text-3xl font-extrabold text-ink sm:text-4xl">
+        Junior Traders
       </h1>
-      <p className="mb-8 mt-2 text-center text-indigo-500">
-        Learn how investing works with pretend money. Who’s exploring today?
+      <p className="mb-8 mt-2 text-center text-ink-dim">
+        Learn how investing works with pretend money. Who’s trading today?
       </p>
 
       <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
@@ -46,10 +46,10 @@ export default function ProfilePicker({ onPick }: { onPick: (id: ProfileId) => v
       </div>
 
       {!PRICES_ARE_REAL && (
-        <p className="mt-8 max-w-md rounded-2xl bg-amber-100 px-4 py-3 text-center text-sm font-medium text-amber-800">
+        <p className="mt-8 max-w-md rounded-2xl bg-amber-400/10 px-4 py-3 text-center text-sm font-medium text-amber-200 ring-1 ring-amber-400/20">
           Using <strong>practice prices</strong> for now. A grown-up can run{' '}
-          <code className="rounded bg-amber-200 px-1">npm run refresh-prices</code> to switch to
-          real market data.
+          <code className="rounded bg-amber-400/20 px-1 text-amber-100">npm run refresh-prices</code>{' '}
+          to switch to real market data.
         </p>
       )}
     </div>
@@ -76,8 +76,8 @@ function KidCard({
       style={{ borderTop: `6px solid ${colour}` }}
     >
       <span className="text-6xl">{emoji}</span>
-      <span className="text-xl font-extrabold text-indigo-900">{name}</span>
-      <span className="text-sm text-indigo-400">{subtitle}</span>
+      <span className="text-xl font-extrabold text-ink">{name}</span>
+      <span className="text-sm text-slate-400">{subtitle}</span>
     </button>
   )
 }

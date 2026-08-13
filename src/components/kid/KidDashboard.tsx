@@ -36,15 +36,15 @@ export default function KidDashboard({ kidId }: { kidId: 'sai' | 'leila' }) {
     <div className="mx-auto max-w-4xl px-4">
       {/* Simple / detailed toggle — lets the app grow with the child. */}
       <div className="flex items-center justify-end pt-4">
-        <div className="inline-flex rounded-full bg-white p-1 shadow-sm ring-1 ring-black/5">
+        <div className="inline-flex rounded-full bg-white/5 p-1 shadow-sm ring-1 ring-white/10">
           <button
-            className={`tab px-4 py-1 ${!detailed ? 'bg-brand-600 text-white' : 'text-indigo-500'}`}
+            className={`tab px-4 py-1 ${!detailed ? 'bg-brand-600 text-white' : 'text-slate-400'}`}
             onClick={() => dispatch({ type: 'SET_VIEW_MODE', kid: kidId, mode: 'simple' })}
           >
             😀 Simple
           </button>
           <button
-            className={`tab px-4 py-1 ${detailed ? 'bg-brand-600 text-white' : 'text-indigo-500'}`}
+            className={`tab px-4 py-1 ${detailed ? 'bg-brand-600 text-white' : 'text-slate-400'}`}
             onClick={() => dispatch({ type: 'SET_VIEW_MODE', kid: kidId, mode: 'detailed' })}
           >
             🤓 Detailed
@@ -61,14 +61,14 @@ export default function KidDashboard({ kidId }: { kidId: 'sai' | 'leila' }) {
       </main>
 
       {/* Bottom tab bar — big, thumb-friendly targets. */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-black/5 bg-white/90 backdrop-blur">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-night-900/85 backdrop-blur">
         <div className="mx-auto flex max-w-4xl">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-bold transition ${
-                tab === t.id ? 'text-brand-700' : 'text-indigo-300'
+                tab === t.id ? 'text-brand-200' : 'text-slate-500'
               }`}
             >
               <span className="text-xl">{t.emoji}</span>

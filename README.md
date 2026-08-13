@@ -1,4 +1,4 @@
-# 🚀 Money Explorers — Kids' Investing Dashboard
+# 🚀 Junior Traders — Kids' Investing Dashboard
 
 A friendly, game-like app that teaches **Sai (10)** and **Leila (13)** the basics of
 investing using **pretend money**. There is no real brokerage, no real money, and nothing
@@ -109,7 +109,7 @@ One-time setup (two settings in your repo on github.com):
    Public_. (Or keep it private if you have a paid GitHub plan.)
 2. **Turn on Pages**: _Settings → Pages → Build and deployment → Source → **GitHub Actions**_.
 
-Then run the workflow once (_Actions → Build & deploy Money Explorers → Run workflow_). After
+Then run the workflow once (_Actions → Build & deploy Junior Traders → Run workflow_). After
 it finishes, your site is live at:
 
 ```

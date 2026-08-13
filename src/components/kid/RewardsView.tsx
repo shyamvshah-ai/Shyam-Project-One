@@ -63,7 +63,7 @@ function Leaderboard({ meId, detailed }: { meId: 'sai' | 'leila'; detailed: bool
   return (
     <Card>
       <SectionTitle>🏆 Leaderboard</SectionTitle>
-      <p className="mb-3 text-sm text-indigo-500">
+      <p className="mb-3 text-sm text-slate-400">
         Who’s grown their money the most (in %) — you both started with the same £1,000.
       </p>
       <div className="space-y-2">
@@ -74,23 +74,23 @@ function Leaderboard({ meId, detailed }: { meId: 'sai' | 'leila'; detailed: bool
             <div
               key={r.id}
               className={`flex items-center gap-3 rounded-2xl p-3 ${
-                isMe ? 'bg-brand-50 ring-2 ring-brand-200' : 'bg-indigo-50/60'
+                isMe ? 'bg-white/10 ring-2 ring-brand-200' : 'bg-white/5'
               }`}
             >
               <span className="text-2xl">{medal}</span>
               <span className="text-2xl">{r.kid.emoji}</span>
               <div className="flex-1">
-                <div className="font-extrabold text-indigo-900">
-                  {r.kid.name} {isMe && <span className="text-brand-500">(you)</span>}
+                <div className="font-extrabold text-ink">
+                  {r.kid.name} {isMe && <span className="text-mint">(you)</span>}
                 </div>
-                <div className="text-sm text-indigo-400">{money(r.value)}</div>
+                <div className="text-sm text-slate-400">{money(r.value)}</div>
               </div>
               {detailed ? (
                 <GainPill amount={r.gain} pct={r.gainPct} size="sm" />
               ) : (
                 <span
                   className={`font-extrabold ${
-                    r.gain > 0 ? 'text-up' : r.gain < 0 ? 'text-down' : 'text-indigo-400'
+                    r.gain > 0 ? 'text-up' : r.gain < 0 ? 'text-down' : 'text-slate-400'
                   }`}
                 >
                   {r.gain === 0 ? 'even' : percent(r.gainPct)}
@@ -101,7 +101,7 @@ function Leaderboard({ meId, detailed }: { meId: 'sai' | 'leila'; detailed: bool
         })}
       </div>
       {tied && (
-        <p className="mt-2 text-center text-sm text-indigo-400">
+        <p className="mt-2 text-center text-sm text-slate-400">
           Neck and neck! Make your first trade to pull ahead.
         </p>
       )}
@@ -114,7 +114,7 @@ function BadgesCard({ kid }: { kid: KidProfile }) {
   return (
     <Card>
       <SectionTitle>
-        🎖️ Badges <span className="text-indigo-300">({earnedCount}/{BADGES.length})</span>
+        🎖️ Badges <span className="text-slate-500">({earnedCount}/{BADGES.length})</span>
       </SectionTitle>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {BADGES.map((b) => {
@@ -123,13 +123,13 @@ function BadgesCard({ kid }: { kid: KidProfile }) {
             <div
               key={b.id}
               className={`rounded-2xl p-3 text-center transition ${
-                earned ? 'bg-up-soft ring-1 ring-up/30' : 'bg-slate-100 opacity-70'
+                earned ? 'bg-up-soft ring-1 ring-up/30' : 'bg-white/5 opacity-70'
               }`}
               title={b.how}
             >
               <div className={`text-3xl ${earned ? '' : 'grayscale'}`}>{b.emoji}</div>
-              <div className="mt-1 text-sm font-bold text-indigo-900">{b.name}</div>
-              <div className="mt-0.5 text-[11px] leading-tight text-indigo-400">
+              <div className="mt-1 text-sm font-bold text-ink">{b.name}</div>
+              <div className="mt-0.5 text-[11px] leading-tight text-slate-400">
                 {earned ? `Earned ${niceDate(earned.earnedAt)}` : b.how}
               </div>
             </div>

@@ -16,11 +16,11 @@ export default function AppHeader({
   onSwitch: () => void
 }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-black/5 bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-night-900/70 backdrop-blur">
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🚀</span>
-          <span className="hidden font-extrabold text-indigo-900 sm:inline">Money Explorers</span>
+          <span className="hidden font-extrabold text-ink sm:inline">Junior Traders</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -29,14 +29,14 @@ export default function AppHeader({
             style={{ background: `${colour}22` }}
           >
             <span className="text-xl">{emoji}</span>
-            <span className="font-bold text-indigo-900">{name}</span>
+            <span className="font-bold text-ink">{name}</span>
           </div>
           <button onClick={onSwitch} className="btn-ghost text-sm">
             Switch
           </button>
         </div>
       </div>
-      <div className="mx-auto max-w-4xl px-4 pb-1 text-[11px] text-indigo-400">
+      <div className="mx-auto max-w-4xl px-4 pb-1 text-[11px] text-slate-400">
         {PRICES_ARE_REAL ? 'Real market prices' : 'Practice prices'} · updated{' '}
         {niceDate(PRICES_GENERATED_AT.slice(0, 10))}
       </div>

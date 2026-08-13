@@ -32,13 +32,13 @@ export default function PriceChart({
   height?: number
 }) {
   const data = useMemo(() => priceHistory(ticker, days || undefined), [ticker, days])
-  if (data.length < 2) return <p className="text-indigo-400">Not enough price history yet.</p>
+  if (data.length < 2) return <p className="text-slate-400">Not enough price history yet.</p>
   const rising = data[data.length - 1].price >= data[0].price
-  const colour = rising ? '#16a34a' : '#dc2626'
+  const colour = rising ? '#34d399' : '#fb7185'
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 5, right: 5, left: -18, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#eef" />
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
         <XAxis
           dataKey="date"
           tickFormatter={shortDate}

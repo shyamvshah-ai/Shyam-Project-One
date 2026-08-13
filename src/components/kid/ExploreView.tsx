@@ -5,6 +5,7 @@ import { dailyChange, hasPrices, latestPrice, localPrice, priceHistory } from '.
 import { localMoney, moneyExact, percent } from '../../lib/format'
 import { Card, GainPill, Sparkline } from '../common/ui'
 import Jargon from '../common/Jargon'
+import CompanyLogo from '../common/CompanyLogo'
 import AssetChartModal from './AssetChartModal'
 
 // "Explore" — browse the curated, kid-friendly universe. Every card explains in
@@ -41,12 +42,14 @@ export default function ExploreView({
 
   return (
     <div className="space-y-4">
-      <Card className="!p-3">
+      {/* relative z-40 keeps the jargon tooltips above the asset cards below,
+          which create their own stacking layers via their blur backdrop. */}
+      <Card className="relative z-40 !p-3">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="🔍 Search names, sectors or places…"
-          className="mb-2 w-full rounded-2xl border-2 border-brand-100 px-3 py-2 text-indigo-900 focus:border-brand-400 focus:outline-none"
+          className="mb-2 w-full rounded-2xl border-2 border-white/10 px-3 py-2 text-ink focus:border-brand-400 focus:outline-none"
         />
         <div className="flex gap-2">
           <FilterButton active={filter === 'all'} onClick={() => setFilter('all')}>
@@ -74,7 +77,7 @@ export default function ExploreView({
         ))}
       </div>
       {list.length === 0 && (
-        <Card className="text-center text-indigo-500">No matches — try a different search.</Card>
+        <Card className="text-center text-slate-400">No matches — try a different search.</Card>
       )}
 
       {chartAsset && (
@@ -106,7 +109,7 @@ function FilterButton({
     <button
       onClick={onClick}
       className={`flex-1 rounded-full px-3 py-1.5 text-sm font-bold transition ${
-        active ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-700'
+        active ? 'bg-brand-600 text-white' : 'bg-white/10 text-brand-200'
       }`}
     >
       {children}
@@ -134,40 +137,40 @@ function AssetCard({
   return (
     <Card className="flex flex-col">
       <div className="flex items-start gap-3">
-        <span className="text-3xl">{asset.emoji}</span>
+        <CompanyLogo asset={asset} size={38} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="truncate font-extrabold text-indigo-900">{asset.name}</span>
+            <span className="truncate font-extrabold text-ink">{asset.name}</span>
             {owned && <span className="pill bg-up-soft text-up !px-2 !py-0 text-[10px]">owned</span>}
           </div>
-          <div className="text-xs text-indigo-400">
+          <div className="text-xs text-slate-400">
             {asset.kind === 'etf' ? '🧺 Basket' : '🏢 Company'} · {asset.sector} · {asset.geography}
           </div>
         </div>
         {/* Tap the mini-chart to open the full history. */}
         <button
           onClick={() => onOpenChart(asset)}
-          className="group flex flex-col items-center rounded-xl p-1 transition hover:bg-brand-50"
+          className="group flex flex-col items-center rounded-xl p-1 transition hover:bg-white/10"
           aria-label={`See ${asset.name} price history`}
           title="Tap to see the price chart"
         >
           <Sparkline points={priceHistory(asset.ticker, 60)} width={64} height={28} />
-          <span className="text-[10px] font-semibold text-brand-400 group-hover:text-brand-600">
+          <span className="text-[10px] font-semibold text-brand-400 group-hover:text-mint">
             📈 chart
           </span>
         </button>
       </div>
 
-      <p className="mt-2 text-sm text-indigo-600">{asset.blurb}</p>
+      <p className="mt-2 text-sm text-slate-300">{asset.blurb}</p>
 
       {detailed && asset.detail && <DetailFacts asset={asset} />}
 
       <div className="mt-3 flex items-center justify-between">
         <div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-extrabold text-indigo-900">{moneyExact(price)}</span>
+            <span className="text-lg font-extrabold text-ink">{moneyExact(price)}</span>
             {local && local.currency !== 'GBP' && (
-              <span className="text-xs font-semibold text-indigo-400">
+              <span className="text-xs font-semibold text-slate-400">
                 {localMoney(local.currency, local.price)}
               </span>
             )}
@@ -201,13 +204,13 @@ function DetailFacts({ asset }: { asset: Asset }) {
 
   if (facts.length === 0) return null
   return (
-    <div className="mt-2 grid grid-cols-2 gap-1.5 rounded-2xl bg-indigo-50/70 p-2 text-xs">
+    <div className="mt-2 grid grid-cols-2 gap-1.5 rounded-2xl bg-white/5 p-2 text-xs">
       {facts.map((f) => (
         <div key={f.label} className="flex items-center justify-between gap-1">
           <Jargon k={f.jargon}>
-            <span className="text-indigo-500">{f.label}</span>
+            <span className="text-slate-400">{f.label}</span>
           </Jargon>
-          <span className="font-bold text-indigo-900">{f.value}</span>
+          <span className="font-bold text-ink">{f.value}</span>
         </div>
       ))}
     </div>

@@ -14,12 +14,12 @@ export default function JournalView({ kid }: { kid: KidProfile }) {
     <div className="space-y-4">
       <Card>
         <SectionTitle>My trade diary 📔</SectionTitle>
-        <p className="mb-3 text-sm text-indigo-500">
+        <p className="mb-3 text-sm text-slate-400">
           Every time you buy or sell, you write down <em>why</em>. Reading these later is one of
           the best ways to become a smarter investor.
         </p>
         {trades.length === 0 ? (
-          <p className="text-indigo-500">No trades yet — your first one will appear here.</p>
+          <p className="text-slate-400">No trades yet — your first one will appear here.</p>
         ) : (
           <ol className="space-y-2">
             {trades.map((t) => {
@@ -28,7 +28,7 @@ export default function JournalView({ kid }: { kid: KidProfile }) {
               return (
                 <li
                   key={t.id}
-                  className="flex gap-3 rounded-2xl bg-indigo-50/60 p-3"
+                  className="flex gap-3 rounded-2xl bg-white/5 p-3"
                 >
                   <span className="text-2xl">{asset?.emoji ?? '📈'}</span>
                   <div className="min-w-0 flex-1">
@@ -40,14 +40,14 @@ export default function JournalView({ kid }: { kid: KidProfile }) {
                       >
                         {isBuy ? 'Bought' : 'Sold'}
                       </span>
-                      <span className="font-extrabold text-indigo-900">{asset?.name ?? t.ticker}</span>
-                      <span className="text-sm text-indigo-400">
+                      <span className="font-extrabold text-ink">{asset?.name ?? t.ticker}</span>
+                      <span className="text-sm text-slate-400">
                         {fmtShares(t.shares)} × {moneyExact(t.price)}
                       </span>
-                      <span className="ml-auto text-xs text-indigo-300">{niceDate(t.date)}</span>
+                      <span className="ml-auto text-xs text-slate-500">{niceDate(t.date)}</span>
                     </div>
                     {t.note && (
-                      <p className="mt-1 text-sm italic text-indigo-700">“{t.note}”</p>
+                      <p className="mt-1 text-sm italic text-brand-200">“{t.note}”</p>
                     )}
                   </div>
                 </li>
@@ -60,13 +60,13 @@ export default function JournalView({ kid }: { kid: KidProfile }) {
       <Card>
         <SectionTitle>Money paid in 🐷</SectionTitle>
         {deposits.length === 0 ? (
-          <p className="text-indigo-500">No pocket money added yet.</p>
+          <p className="text-slate-400">No pocket money added yet.</p>
         ) : (
           <ul className="space-y-1.5">
             {deposits.map((d) => (
               <li key={d.id} className="flex items-center justify-between text-sm">
-                <span className="text-indigo-700">
-                  {d.reason} <span className="text-indigo-300">· {niceDate(d.date)}</span>
+                <span className="text-brand-200">
+                  {d.reason} <span className="text-slate-500">· {niceDate(d.date)}</span>
                 </span>
                 <span className="font-bold text-up">+{moneyExact(d.amount)}</span>
               </li>

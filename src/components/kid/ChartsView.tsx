@@ -43,7 +43,7 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
             key={r.label}
             onClick={() => setRangeIdx(i)}
             className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
-              rangeIdx === i ? 'bg-indigo-900 text-white shadow-sm' : 'bg-white text-indigo-500'
+              rangeIdx === i ? 'bg-mint text-night-900 shadow-sm' : 'bg-white/5 text-slate-400'
             }`}
           >
             {r.label}
@@ -54,28 +54,28 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
       <Card>
         <SectionTitle>Your investments over time</SectionTitle>
         {!hasHoldings ? (
-          <p className="text-indigo-500">
+          <p className="text-slate-400">
             You’re starting fresh with {money(kid.cash)}! Buy your first investment and this chart
             will show how it moves up and down over time.
           </p>
         ) : (
           <>
             <div className="mb-2 flex items-baseline gap-2">
-              <span className="text-2xl font-extrabold text-indigo-900">{money(last)}</span>
+              <span className="text-2xl font-extrabold text-ink">{money(last)}</span>
               <span className={`font-semibold ${change >= 0 ? 'text-up' : 'text-down'}`}>
                 {change >= 0 ? '▲' : '▼'} {money(Math.abs(change))} ({percent(changePct)})
               </span>
-              <span className="text-sm text-indigo-300">over {RANGES[rangeIdx].label}</span>
+              <span className="text-sm text-slate-500">over {RANGES[rangeIdx].label}</span>
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={history} margin={{ top: 5, right: 5, left: -18, bottom: 0 }}>
                 <defs>
                   <linearGradient id="val" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
+                    <stop offset="0%" stopColor="#5eead4" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#5eead4" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eef" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
                 <XAxis
                   dataKey="date"
                   tickFormatter={shortDate}
@@ -103,7 +103,7 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
                 <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="#4f46e5"
+                  stroke="#5eead4"
                   strokeWidth={3}
                   fill="url(#val)"
                   baseValue="dataMin"
@@ -112,8 +112,8 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
               </AreaChart>
             </ResponsiveContainer>
             {detailed && (
-              <p className="mt-1 text-center text-xs text-indigo-400">
-                <span className="text-brand-600">Purple</span> = what your investments are worth ·{' '}
+              <p className="mt-1 text-center text-xs text-slate-400">
+                <span className="text-mint">Mint</span> = what your investments are worth ·{' '}
                 <span className="text-amber-500">dashed</span> = money you paid in
               </p>
             )}
@@ -124,7 +124,7 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
       <Card>
         <SectionTitle>A closer look at one thing</SectionTitle>
         {owned.length === 0 ? (
-          <p className="text-indigo-500">Once you own something, its price chart shows up here.</p>
+          <p className="text-slate-400">Once you own something, its price chart shows up here.</p>
         ) : (
           <>
             <div className="mb-3 flex flex-wrap gap-2">
@@ -135,7 +135,7 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
                     key={t}
                     onClick={() => setTicker(t)}
                     className={`pill ${
-                      ticker === t ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-700'
+                      ticker === t ? 'bg-brand-600 text-white' : 'bg-white/10 text-brand-200'
                     }`}
                   >
                     {a?.emoji} {a?.name}

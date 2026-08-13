@@ -28,7 +28,7 @@ export default function Jargon({ k, children }: Props) {
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onBlur={() => setOpen(false)}
-        className="cursor-help border-b-2 border-dotted border-brand-400 font-semibold text-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+        className="cursor-help border-b-2 border-dotted border-brand-400 font-semibold text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
       >
         {children}
         <span aria-hidden className="ml-0.5 text-brand-400">
@@ -39,7 +39,7 @@ export default function Jargon({ k, children }: Props) {
         <span
           id={id}
           role="tooltip"
-          className="absolute left-1/2 top-full z-30 mt-2 w-64 -translate-x-1/2 rounded-2xl bg-indigo-950 p-3 text-left text-sm font-medium leading-snug text-white shadow-xl"
+          className="absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-2xl bg-indigo-950 p-3 text-left text-sm font-medium leading-snug text-white shadow-xl"
         >
           <span className="mb-1 block font-bold text-brand-200">{entry.term}</span>
           {entry.short}

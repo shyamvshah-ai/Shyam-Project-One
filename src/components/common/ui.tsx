@@ -21,14 +21,14 @@ export function Card({
 }
 
 export function SectionTitle({ children }: { children: ReactNode }) {
-  return <h2 className="mb-3 text-lg font-extrabold text-indigo-900 sm:text-xl">{children}</h2>
+  return <h2 className="mb-3 text-lg font-extrabold text-ink sm:text-xl">{children}</h2>
 }
 
 /** Green/red colour classes for up/down/flat. */
 export function toneClasses(n: number): { text: string; bg: string } {
   if (n > 0) return { text: 'text-up', bg: 'bg-up-soft' }
   if (n < 0) return { text: 'text-down', bg: 'bg-down-soft' }
-  return { text: 'text-slate-500', bg: 'bg-slate-100' }
+  return { text: 'text-slate-500', bg: 'bg-white/5' }
 }
 
 export function arrow(n: number): string {
@@ -86,7 +86,7 @@ export function Sparkline({
     })
     .join(' ')
   const rising = prices[prices.length - 1] >= prices[0]
-  const colour = rising ? '#16a34a' : '#dc2626'
+  const colour = rising ? '#34d399' : '#fb7185'
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden>
       <path d={d} fill="none" stroke={colour} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />

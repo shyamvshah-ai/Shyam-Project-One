@@ -4,6 +4,7 @@ import { useStore } from '../../state/store'
 import { latestPrice, localPrice, priceHistory } from '../../lib/prices'
 import { moneyExact, moneySmart, localMoney, shares as fmtShares } from '../../lib/format'
 import { Sparkline } from '../common/ui'
+import CompanyLogo from '../common/CompanyLogo'
 
 // The buy/sell dialog. The key teaching rule lives here: you cannot confirm a
 // trade without writing a one-line "why" note. That note goes into the journal.
@@ -54,14 +55,14 @@ export default function TradeModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl"
+        className="w-full max-w-md rounded-t-3xl bg-night-800 p-5 text-ink shadow-2xl ring-1 ring-white/10 sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center gap-3">
-          <span className="text-4xl">{asset.emoji}</span>
+          <CompanyLogo asset={asset} size={44} />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-lg font-extrabold text-indigo-900">{asset.name}</div>
-            <div className="text-sm text-indigo-400">
+            <div className="truncate text-lg font-extrabold text-ink">{asset.name}</div>
+            <div className="text-sm text-slate-400">
               {moneyExact(price)} each
               {(() => {
                 const l = localPrice(asset.ticker)
@@ -72,14 +73,14 @@ export default function TradeModal({
           <Sparkline points={spark} />
         </div>
 
-        <p className="mb-4 rounded-2xl bg-brand-50 p-3 text-sm text-indigo-700">{asset.blurb}</p>
+        <p className="mb-4 rounded-2xl bg-white/10 p-3 text-sm text-brand-200">{asset.blurb}</p>
 
         <div className="mb-4">
           <div className="mb-2 flex items-center justify-between">
-            <label className="font-bold text-indigo-900">
+            <label className="font-bold text-ink">
               How many {isBuy ? 'to buy' : 'to sell'}?
             </label>
-            <span className="text-sm text-indigo-400">
+            <span className="text-sm text-slate-400">
               {isBuy
                 ? `You have ${moneySmart(kid.cash)}`
                 : `You hold ${fmtShares(held)}`}
@@ -95,30 +96,30 @@ export default function TradeModal({
               step={step(price)}
               value={shares}
               onChange={(e) => setShares(Math.max(0, Number(e.target.value)))}
-              className="w-full rounded-2xl border-2 border-brand-100 px-3 py-2 text-center text-xl font-bold text-indigo-900 focus:border-brand-400 focus:outline-none"
+              className="w-full rounded-2xl border-2 border-white/10 px-3 py-2 text-center text-xl font-bold text-ink focus:border-brand-400 focus:outline-none"
             />
             <StepButton label="+" onClick={() => setShares((s) => round(s + step(price)))} />
           </div>
 
           {isBuy && maxBuy > 0 && (
             <button
-              className="mt-2 text-sm font-semibold text-brand-600"
+              className="mt-2 text-sm font-semibold text-mint"
               onClick={() => setShares(maxBuy)}
             >
               Buy as many as I can afford ({fmtShares(maxBuy)})
             </button>
           )}
           {!isBuy && held > 0 && (
-            <button className="mt-2 text-sm font-semibold text-brand-600" onClick={() => setShares(held)}>
+            <button className="mt-2 text-sm font-semibold text-mint" onClick={() => setShares(held)}>
               Sell all ({fmtShares(held)})
             </button>
           )}
         </div>
 
         <div className="mb-4">
-          <label htmlFor="why" className="mb-1 block font-bold text-indigo-900">
+          <label htmlFor="why" className="mb-1 block font-bold text-ink">
             Why are you {isBuy ? 'buying' : 'selling'} this?{' '}
-            <span className="font-normal text-indigo-400">(you must write one line)</span>
+            <span className="font-normal text-slate-400">(you must write one line)</span>
           </label>
           <textarea
             id="why"
@@ -130,16 +131,16 @@ export default function TradeModal({
                 ? 'e.g. I use their products all the time and think more people will too'
                 : 'e.g. I need the money for something else, or I changed my mind'
             }
-            className="w-full resize-none rounded-2xl border-2 border-brand-100 px-3 py-2 text-indigo-900 focus:border-brand-400 focus:outline-none"
+            className="w-full resize-none rounded-2xl border-2 border-white/10 px-3 py-2 text-ink focus:border-brand-400 focus:outline-none"
           />
           {!noteOk && note.length > 0 && (
             <p className="mt-1 text-xs text-amber-600">A few more words — this becomes your trade diary.</p>
           )}
         </div>
 
-        <div className="mb-4 flex items-center justify-between rounded-2xl bg-indigo-50 px-4 py-3">
-          <span className="font-bold text-indigo-900">{isBuy ? 'Total cost' : 'You get'}</span>
-          <span className="text-2xl font-extrabold text-indigo-900">{moneyExact(total)}</span>
+        <div className="mb-4 flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+          <span className="font-bold text-ink">{isBuy ? 'Total cost' : 'You get'}</span>
+          <span className="text-2xl font-extrabold text-ink">{moneyExact(total)}</span>
         </div>
 
         <div className="flex gap-3">
@@ -168,7 +169,7 @@ function StepButton({ label, onClick }: { label: string; onClick: () => void }) 
   return (
     <button
       onClick={onClick}
-      className="h-11 w-11 shrink-0 rounded-2xl bg-brand-100 text-2xl font-bold text-brand-700 active:scale-95"
+      className="h-11 w-11 shrink-0 rounded-2xl bg-white/10 text-2xl font-bold text-brand-200 active:scale-95"
       aria-label={label === '+' ? 'increase' : 'decrease'}
     >
       {label}

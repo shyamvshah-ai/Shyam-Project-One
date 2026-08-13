@@ -4,14 +4,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Friendly, high-contrast palette. Green = up, red = down.
+        // "Midnight" dark theme. Green = up, red = down.
         up: {
-          DEFAULT: '#16a34a',
-          soft: '#dcfce7',
+          DEFAULT: '#34d399',
+          soft: '#10b98126', // translucent green for pills on dark
         },
         down: {
-          DEFAULT: '#dc2626',
-          soft: '#fee2e2',
+          DEFAULT: '#fb7185',
+          soft: '#fb718526',
         },
         brand: {
           50: '#eef2ff',
@@ -23,15 +23,28 @@ export default {
           600: '#4f46e5',
           700: '#4338ca',
         },
+        mint: '#5eead4',
+        // Text tones for a dark ground.
+        ink: {
+          DEFAULT: '#e9edf7',
+          dim: '#9aa3bd',
+          faint: '#6b7391',
+        },
+        // Page + card grounds.
+        night: {
+          900: '#0b0f1e',
+          800: '#0f1424',
+          700: '#131a30',
+        },
       },
       fontFamily: {
-        // Friendly, rounded system fonts — no web-font download, works offline.
+        // Crisp modern grotesk via the system stack (no web-font download).
         sans: [
-          'ui-rounded',
-          '"SF Pro Rounded"',
-          '"Segoe UI"',
+          'ui-sans-serif',
           'system-ui',
-          'Nunito',
+          '-apple-system',
+          '"Segoe UI"',
+          'Roboto',
           '"Helvetica Neue"',
           'Arial',
           'sans-serif',

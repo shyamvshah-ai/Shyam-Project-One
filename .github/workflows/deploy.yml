@@ -1,4 +1,4 @@
-name: Build & deploy Money Explorers
+name: Build & deploy Junior Traders
 
 # Publishes the app to GitHub Pages and refreshes real end-of-day prices once a
 # day, so the hosted site stays current with no effort. GitHub's runners have

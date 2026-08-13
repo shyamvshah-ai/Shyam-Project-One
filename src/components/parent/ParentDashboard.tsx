@@ -50,9 +50,9 @@ export default function ParentDashboard({
 
       <Card>
         <SectionTitle>About this dashboard</SectionTitle>
-        <ul className="list-disc space-y-1 pl-5 text-sm text-indigo-600">
+        <ul className="list-disc space-y-1 pl-5 text-sm text-slate-300">
           <li>Everything here is <strong>pretend money</strong> — there is no real account or risk.</li>
-          <li>Prices update when you run <code className="rounded bg-indigo-50 px-1">npm run refresh-prices</code> (daily is plenty).</li>
+          <li>Prices update when you run <code className="rounded bg-white/5 px-1">npm run refresh-prices</code> (daily is plenty).</li>
           <li>Coming next: editing the stock/ETF list, diversification rules, badges and a weekly recap.</li>
         </ul>
       </Card>
@@ -70,8 +70,8 @@ function KidSummaryCard({ kid, onOpen }: { kid: KidProfile; onOpen: () => void }
       <div className="flex items-center gap-3">
         <span className="text-4xl">{kid.emoji}</span>
         <div className="flex-1">
-          <div className="text-xl font-extrabold text-indigo-900">{kid.name}</div>
-          <div className="text-sm text-indigo-400">
+          <div className="text-xl font-extrabold text-ink">{kid.name}</div>
+          <div className="text-sm text-slate-400">
             {kid.holdings.length} holdings · {moneyExact(kid.cash)} cash
           </div>
         </div>
@@ -81,15 +81,15 @@ function KidSummaryCard({ kid, onOpen }: { kid: KidProfile; onOpen: () => void }
       </div>
 
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-3xl font-extrabold text-indigo-900">{money(p.totalValue)}</span>
+        <span className="text-3xl font-extrabold text-ink">{money(p.totalValue)}</span>
         <GainPill amount={p.totalGain} pct={p.totalGainPct} size="sm" />
       </div>
 
-      <div className="mt-4 rounded-2xl bg-indigo-50/70 p-3">
-        <div className="mb-2 text-sm font-bold text-indigo-900">Top up allowance</div>
+      <div className="mt-4 rounded-2xl bg-white/5 p-3">
+        <div className="mb-2 text-sm font-bold text-ink">Top up allowance</div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
               £
             </span>
             <input
@@ -98,7 +98,7 @@ function KidSummaryCard({ kid, onOpen }: { kid: KidProfile; onOpen: () => void }
               step={1}
               value={amount}
               onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))}
-              className="w-full rounded-xl border-2 border-brand-100 py-2 pl-7 pr-3 font-bold text-indigo-900 focus:border-brand-400 focus:outline-none"
+              className="w-full rounded-xl border-2 border-white/10 py-2 pl-7 pr-3 font-bold text-ink focus:border-brand-400 focus:outline-none"
             />
           </div>
           <button
@@ -116,7 +116,7 @@ function KidSummaryCard({ kid, onOpen }: { kid: KidProfile; onOpen: () => void }
             Pay in
           </button>
         </div>
-        <div className="mt-1 text-xs text-indigo-400">
+        <div className="mt-1 text-xs text-slate-400">
           Last topped up {niceDate(kid.allowance.lastPaid)}
         </div>
       </div>
