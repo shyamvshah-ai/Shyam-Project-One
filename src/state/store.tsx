@@ -1,17 +1,29 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useReducer,
+  useRef,
+  useState,
   type ReactNode,
 } from 'react'
 import type { AppState, KidProfile, Trade, ViewMode } from '../types'
-import { loadState, saveState, newId } from '../lib/storage'
+import {
+  loadState,
+  saveState,
+  newId,
+  loadFamilyCode,
+  saveFamilyCode,
+  clearFamilyCode,
+} from '../lib/storage'
 import { makeInitialState } from '../data/seed'
 import { latestPrice, LATEST_DATE } from '../lib/prices'
 import { satisfiedBadges } from '../lib/badges'
 import { todayISO, weekIndex } from '../lib/format'
+import { SYNC_ENABLED } from '../lib/syncConfig'
+import { getRemote, putRemote } from './sync'
 
 // Central app state for the shared local instance. A tiny reducer keeps all the
 // money rules in one place; everything persists to localStorage automatically.
@@ -25,6 +37,7 @@ type Action =
   | { type: 'TOP_UP'; kid: KidId; amount: number; reason: string }
   | { type: 'CHECK_IN'; kid: KidId }
   | { type: 'RESET' }
+  | { type: 'HYDRATE'; state: AppState }
 
 /** Merge any newly-earned badges into a child's collection (never removes). */
 function awardBadges(kid: KidProfile): KidProfile {
@@ -147,14 +160,27 @@ function reducer(state: AppState, action: Action): AppState {
     case 'RESET':
       return makeInitialState()
 
+    case 'HYDRATE':
+      // Replace all state with a version pulled from cross-device sync.
+      return action.state
+
     default:
       return state
   }
 }
 
+export type SyncStatus = 'off' | 'connecting' | 'synced' | 'error'
+
 interface StoreValue {
   state: AppState
   dispatch: React.Dispatch<Action>
+  /** Whether cross-device sync is available in this build. */
+  syncAvailable: boolean
+  /** The active family code, or null if not syncing. */
+  familyCode: string | null
+  syncStatus: SyncStatus
+  joinFamily: (code: string) => void
+  leaveFamily: () => void
 }
 
 const StoreContext = createContext<StoreValue | null>(null)
@@ -171,12 +197,124 @@ function initState(): AppState {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, initState)
+  const [familyCode, setFamilyCode] = useState<string | null>(() =>
+    SYNC_ENABLED ? loadFamilyCode() : null,
+  )
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('off')
 
+  // Refs let the sync effects see the latest values without re-subscribing.
+  const stateRef = useRef(state)
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
+  const lastAppliedTs = useRef('') // remote timestamp we last applied/wrote
+  const lastSyncedJson = useRef('') // state JSON last agreed with the server
+
+  // Always keep a local copy (offline + the sync fallback).
   useEffect(() => {
     saveState(state)
   }, [state])
 
-  const value = useMemo(() => ({ state, dispatch }), [state])
+  // On joining a family: adopt the shared record if it exists, else publish
+  // this device's current state as the shared starting point.
+  useEffect(() => {
+    if (!SYNC_ENABLED || !familyCode) {
+      setSyncStatus('off')
+      return
+    }
+    let cancelled = false
+    setSyncStatus('connecting')
+    ;(async () => {
+      try {
+        const remote = await getRemote(familyCode)
+        if (cancelled) return
+        if (remote) {
+          lastSyncedJson.current = JSON.stringify(remote.state)
+          lastAppliedTs.current = remote.updatedAt
+          dispatch({ type: 'HYDRATE', state: remote.state })
+        } else {
+          const ts = await putRemote(familyCode, stateRef.current)
+          lastSyncedJson.current = JSON.stringify(stateRef.current)
+          lastAppliedTs.current = ts
+        }
+        if (!cancelled) setSyncStatus('synced')
+      } catch (err) {
+        if (!cancelled) {
+          console.warn('sync: join failed', err)
+          setSyncStatus('error')
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [familyCode])
+
+  // Push local changes up (debounced). Skips when nothing actually changed,
+  // which also stops a pull→apply→push feedback loop between devices.
+  useEffect(() => {
+    if (!SYNC_ENABLED || !familyCode) return
+    const json = JSON.stringify(state)
+    if (json === lastSyncedJson.current) return
+    const handle = setTimeout(async () => {
+      try {
+        const ts = await putRemote(familyCode, state)
+        lastSyncedJson.current = json
+        lastAppliedTs.current = ts
+        setSyncStatus('synced')
+      } catch (err) {
+        console.warn('sync: push failed', err)
+        setSyncStatus('error')
+      }
+    }, 900)
+    return () => clearTimeout(handle)
+  }, [state, familyCode])
+
+  // Poll for changes made on other devices and pull them in.
+  useEffect(() => {
+    if (!SYNC_ENABLED || !familyCode) return
+    const id = setInterval(async () => {
+      try {
+        const remote = await getRemote(familyCode)
+        if (!remote || remote.updatedAt <= lastAppliedTs.current) return
+        lastSyncedJson.current = JSON.stringify(remote.state)
+        lastAppliedTs.current = remote.updatedAt
+        dispatch({ type: 'HYDRATE', state: remote.state })
+        setSyncStatus('synced')
+      } catch {
+        /* keep last status; try again next tick */
+      }
+    }, 6000)
+    return () => clearInterval(id)
+  }, [familyCode])
+
+  const joinFamily = useCallback((code: string) => {
+    const clean = code.trim().toUpperCase()
+    if (!clean) return
+    lastAppliedTs.current = ''
+    lastSyncedJson.current = ''
+    saveFamilyCode(clean)
+    setFamilyCode(clean)
+  }, [])
+
+  const leaveFamily = useCallback(() => {
+    clearFamilyCode()
+    setFamilyCode(null)
+    setSyncStatus('off')
+  }, [])
+
+  const value = useMemo(
+    () => ({
+      state,
+      dispatch,
+      syncAvailable: SYNC_ENABLED,
+      familyCode,
+      syncStatus,
+      joinFamily,
+      leaveFamily,
+    }),
+    [state, familyCode, syncStatus, joinFamily, leaveFamily],
+  )
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 

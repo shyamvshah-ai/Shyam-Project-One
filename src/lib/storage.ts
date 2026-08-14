@@ -39,3 +39,39 @@ export function clearState(): void {
 export function newId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
+
+// --- Family code (for cross-device sync) --------------------------------------
+
+const FAMILY_KEY = 'junior-traders:family'
+
+export function loadFamilyCode(): string | null {
+  try {
+    return localStorage.getItem(FAMILY_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function saveFamilyCode(code: string): void {
+  try {
+    localStorage.setItem(FAMILY_KEY, code)
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearFamilyCode(): void {
+  try {
+    localStorage.removeItem(FAMILY_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** A short, unguessable, easy-to-read family code (no ambiguous characters). */
+export function makeFamilyCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)]
+  return code
+}
