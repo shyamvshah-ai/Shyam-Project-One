@@ -14,8 +14,17 @@ export default function ParentDashboard({
 }: {
   onOpenKid: (id: 'sai' | 'leila') => void
 }) {
-  const { state } = useStore()
+  const { state, dispatch, familyCode } = useStore()
   const kids = [state.kids.sai, state.kids.leila]
+
+  const startOver = () => {
+    const synced = familyCode ? '\n\nBecause sync is on, this resets every device.' : ''
+    const ok = window.confirm(
+      'Start over?\n\nThis puts BOTH children back to £1,000 with nothing invested, and clears all their trades, badges and streaks. This cannot be undone.' +
+        synced,
+    )
+    if (ok) dispatch({ type: 'RESET' })
+  }
   const combined = kids.reduce(
     (acc, k) => {
       const p = portfolioSummary(k)
@@ -52,9 +61,24 @@ export default function ParentDashboard({
         <SectionTitle>About this dashboard</SectionTitle>
         <ul className="list-disc space-y-1 pl-5 text-sm text-slate-300">
           <li>Everything here is <strong>pretend money</strong> — there is no real account or risk.</li>
-          <li>Prices update when you run <code className="rounded bg-white/5 px-1">npm run refresh-prices</code> (daily is plenty).</li>
-          <li>Coming next: editing the stock/ETF list, diversification rules, badges and a weekly recap.</li>
+          <li>Real prices refresh automatically every day.</li>
+          <li>Coming next: editing the stock/ETF list, diversification rules and a weekly recap.</li>
         </ul>
+      </Card>
+
+      <Card>
+        <SectionTitle>Start over</SectionTitle>
+        <p className="mb-3 text-sm text-slate-400">
+          Reset <strong>both children</strong> back to £1,000 with nothing invested — clears all
+          trades, badges and streaks.{' '}
+          {familyCode && 'Because sync is on, this resets every device.'}
+        </p>
+        <button
+          onClick={startOver}
+          className="btn bg-down text-white ring-1 ring-white/10 hover:bg-red-600"
+        >
+          ↺ Start everyone over
+        </button>
       </Card>
     </div>
   )
