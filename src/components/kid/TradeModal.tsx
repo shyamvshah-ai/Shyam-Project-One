@@ -6,8 +6,10 @@ import { moneyExact, moneySmart, localMoney, shares as fmtShares } from '../../l
 import { Sparkline } from '../common/ui'
 import CompanyLogo from '../common/CompanyLogo'
 
-// The buy/sell dialog. The key teaching rule lives here: you cannot confirm a
-// trade without writing a one-line "why" note. That note goes into the journal.
+// The buy/sell dialog. Children think in pounds, not share counts, so they type
+// a £ amount to spend (or cash out) and we work out the shares behind the scenes.
+// The key teaching rule still lives here: you cannot confirm a trade without
+// writing a one-line "why" note. That note goes into the journal.
 
 export default function TradeModal({
   kid,
@@ -23,31 +25,36 @@ export default function TradeModal({
   const { dispatch } = useStore()
   const price = latestPrice(asset.ticker) ?? 0
   const held = kid.holdings.find((h) => h.ticker === asset.ticker)?.shares ?? 0
+  const isBuy = action === 'buy'
 
-  const stepSize = step(price)
-  // The most you can afford, rounded down to the buy step (supports fractions
-  // so a child with only a few pounds can still own a slice of a pricey stock).
-  const maxBuy = price > 0 ? Math.floor(kid.cash / price / stepSize) * stepSize : 0
-  const [shares, setShares] = useState<number>(
-    action === 'buy' ? (maxBuy >= 1 ? 1 : round(maxBuy)) : Math.min(1, held),
-  )
+  // The pot of pounds this trade can draw on: cash to spend when buying, or the
+  // current value of what they hold when selling.
+  const holdValue = round(price * held)
+  const budget = isBuy ? kid.cash : holdValue
+
+  const [amount, setAmount] = useState<number>(() => round(Math.min(budget, isBuy ? 50 : budget)))
   const [note, setNote] = useState('')
 
-  const total = price * shares
+  // Turn the £ amount into a number of shares. A full sell uses the exact holding
+  // so no fractional "dust" is left behind by rounding.
+  const shares =
+    price > 0
+      ? !isBuy && amount >= holdValue - 1e-9
+        ? held
+        : amount / price
+      : 0
+
   const noteOk = note.trim().length >= 3
-  const sharesOk =
-    shares > 0 && (action === 'buy' ? total <= kid.cash + 1e-9 : shares <= held + 1e-9)
-  const canConfirm = noteOk && sharesOk
+  const amountOk = amount > 0 && amount <= budget + 1e-9
+  const canConfirm = noteOk && amountOk && shares > 0
 
   const spark = useMemo(() => priceHistory(asset.ticker, 90), [asset.ticker])
 
   function confirm() {
     if (!canConfirm) return
-    dispatch({ type: action === 'buy' ? 'BUY' : 'SELL', kid: kid.id, ticker: asset.ticker, shares, note })
+    dispatch({ type: isBuy ? 'BUY' : 'SELL', kid: kid.id, ticker: asset.ticker, shares, note })
     onClose()
   }
-
-  const isBuy = action === 'buy'
 
   return (
     <div
@@ -75,43 +82,50 @@ export default function TradeModal({
 
         <p className="mb-4 rounded-2xl bg-white/10 p-3 text-sm text-brand-200">{asset.blurb}</p>
 
+        {/* Spending money, front and centre — the number they care about. */}
+        <div className="mb-4 flex items-center justify-between rounded-2xl bg-mint/10 px-4 py-3 ring-1 ring-mint/20">
+          <span className="font-bold text-ink">
+            {isBuy ? '💰 Spending money' : '📦 This holding is worth'}
+          </span>
+          <span className="text-xl font-extrabold text-mint">
+            {moneyExact(isBuy ? kid.cash : holdValue)}
+          </span>
+        </div>
+
         <div className="mb-4">
           <div className="mb-2 flex items-center justify-between">
-            <label className="font-bold text-ink">
-              How many {isBuy ? 'to buy' : 'to sell'}?
+            <label htmlFor="amount" className="font-bold text-ink">
+              How much to {isBuy ? 'spend' : 'sell'}?
             </label>
-            <span className="text-sm text-slate-400">
-              {isBuy
-                ? `You have ${moneySmart(kid.cash)}`
-                : `You hold ${fmtShares(held)}`}
-            </span>
+            <span className="text-sm text-slate-400">≈ {fmtShares(shares)} shares</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <StepButton label="−" onClick={() => setShares((s) => Math.max(0, round(s - step(price))))} />
-            <input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step={step(price)}
-              value={shares}
-              onChange={(e) => setShares(Math.max(0, Number(e.target.value)))}
-              className="w-full rounded-2xl border-2 border-white/10 px-3 py-2 text-center text-xl font-bold text-ink focus:border-brand-400 focus:outline-none"
-            />
-            <StepButton label="+" onClick={() => setShares((s) => round(s + step(price)))} />
+            <StepButton label="−" onClick={() => setAmount((a) => Math.max(0, round(a - 5)))} />
+            <div className="relative flex-1">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xl font-bold text-slate-400">
+                £
+              </span>
+              <input
+                id="amount"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={5}
+                value={amount}
+                onChange={(e) => setAmount(Math.max(0, round(Number(e.target.value))))}
+                className="w-full rounded-2xl border-2 border-white/10 py-2 pl-8 pr-3 text-center text-xl font-bold text-ink focus:border-brand-400 focus:outline-none"
+              />
+            </div>
+            <StepButton label="+" onClick={() => setAmount((a) => round(Math.min(budget, a + 5)))} />
           </div>
 
-          {isBuy && maxBuy > 0 && (
+          {budget > 0 && (
             <button
               className="mt-2 text-sm font-semibold text-mint"
-              onClick={() => setShares(maxBuy)}
+              onClick={() => setAmount(round(budget))}
             >
-              Buy as many as I can afford ({fmtShares(maxBuy)})
-            </button>
-          )}
-          {!isBuy && held > 0 && (
-            <button className="mt-2 text-sm font-semibold text-mint" onClick={() => setShares(held)}>
-              Sell all ({fmtShares(held)})
+              {isBuy ? `Spend all my money (${moneySmart(kid.cash)})` : `Sell all (${moneySmart(holdValue)})`}
             </button>
           )}
         </div>
@@ -139,8 +153,8 @@ export default function TradeModal({
         </div>
 
         <div className="mb-4 flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
-          <span className="font-bold text-ink">{isBuy ? 'Total cost' : 'You get'}</span>
-          <span className="text-2xl font-extrabold text-ink">{moneyExact(total)}</span>
+          <span className="font-bold text-ink">{isBuy ? 'You’ll spend' : 'You’ll get'}</span>
+          <span className="text-2xl font-extrabold text-ink">{moneyExact(amountOk ? amount : 0)}</span>
         </div>
 
         <div className="flex gap-3">
@@ -152,12 +166,14 @@ export default function TradeModal({
             disabled={!canConfirm}
             className={`flex-1 ${isBuy ? 'btn-primary' : 'btn bg-down text-white hover:bg-red-700'}`}
           >
-            {isBuy ? 'Buy' : 'Sell'} {shares > 0 ? fmtShares(shares) : ''}
+            {isBuy ? 'Buy' : 'Sell'} {amountOk ? moneySmart(amount) : ''}
           </button>
         </div>
-        {!sharesOk && shares > 0 && (
+        {!amountOk && amount > 0 && (
           <p className="mt-2 text-center text-sm text-down">
-            {isBuy ? 'That costs more than your cash.' : 'You don’t have that many to sell.'}
+            {isBuy
+              ? 'That’s more than your spending money.'
+              : 'That’s more than this holding is worth.'}
           </p>
         )}
       </div>
@@ -177,11 +193,6 @@ function StepButton({ label, onClick }: { label: string; onClick: () => void }) 
   )
 }
 
-// Cheaper assets step by whole shares; pricey ones let you buy fractions so a
-// child with a few pounds can still take part.
-function step(price: number): number {
-  return price > 60 ? 0.05 : 1
-}
 function round(n: number): number {
   return Math.round(n * 100) / 100
 }
