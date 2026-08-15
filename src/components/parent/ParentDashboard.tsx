@@ -59,6 +59,20 @@ export default function ParentDashboard({
       </div>
 
       <Card>
+        <SectionTitle>Edit profiles</SectionTitle>
+        <p className="mb-3 text-sm text-slate-400">
+          Make the two accounts your own — change each child’s name, picture and colour. Handy if
+          you’re setting this up for a different family.{' '}
+          {familyCode && 'Changes apply on every synced device.'}
+        </p>
+        <div className="space-y-3">
+          {kids.map((k) => (
+            <EditProfileRow key={k.id} kid={k} />
+          ))}
+        </div>
+      </Card>
+
+      <Card>
         <SectionTitle>About this dashboard</SectionTitle>
         <ul className="list-disc space-y-1 pl-5 text-sm text-slate-300">
           <li>Everything here is <strong>pretend money</strong> — there is no real account or risk.</li>
@@ -100,6 +114,100 @@ export default function ParentDashboard({
           ↺ Start everyone over
         </button>
       </Card>
+    </div>
+  )
+}
+
+const EMOJI_CHOICES = [
+  '🦖', '🦩', '🦊', '🐼', '🦄', '🐙', '🦁', '🐯', '🐨', '🐸',
+  '🐵', '🦉', '🐳', '🦕', '🐝', '🦋', '🐰', '🐷', '🚀', '⚽',
+  '🎮', '🌟', '🏀', '🦈',
+]
+const COLOUR_CHOICES = [
+  '#f97316', '#ec4899', '#8b5cf6', '#6366f1', '#3b82f6', '#06b6d4',
+  '#10b981', '#eab308', '#ef4444', '#14b8a6',
+]
+
+function EditProfileRow({ kid }: { kid: KidProfile }) {
+  const { dispatch } = useStore()
+  const [name, setName] = useState(kid.name)
+  const [emoji, setEmoji] = useState(kid.emoji)
+  const [colour, setColour] = useState(kid.colour)
+  const [saved, setSaved] = useState(false)
+
+  const dirty = name.trim() !== kid.name || emoji !== kid.emoji || colour !== kid.colour
+  const canSave = dirty && name.trim().length > 0
+
+  const save = () => {
+    if (!canSave) return
+    dispatch({ type: 'EDIT_PROFILE', kid: kid.id, name, emoji, colour })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
+  }
+
+  return (
+    <div className="rounded-2xl bg-white/5 p-3" style={{ borderLeft: `5px solid ${colour}` }}>
+      <div className="flex items-center gap-3">
+        <span
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-3xl"
+          style={{ background: `${colour}22` }}
+        >
+          {emoji}
+        </span>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && save()}
+          maxLength={16}
+          placeholder="Name"
+          className="min-w-0 flex-1 rounded-xl border-2 border-white/10 bg-white/5 px-3 py-2 font-bold text-ink focus:border-brand-400 focus:outline-none"
+        />
+      </div>
+
+      <div className="mt-3">
+        <div className="mb-1 text-xs font-semibold text-slate-400">Picture</div>
+        <div className="flex flex-wrap gap-1.5">
+          {EMOJI_CHOICES.map((e) => (
+            <button
+              key={e}
+              onClick={() => setEmoji(e)}
+              className={`flex h-9 w-9 items-center justify-center rounded-xl text-xl ${
+                emoji === e ? 'bg-white/20 ring-2 ring-mint' : 'bg-white/5'
+              }`}
+            >
+              {e}
+            </button>
+          ))}
+          <input
+            value={emoji}
+            onChange={(e) => setEmoji(e.target.value.slice(0, 4))}
+            aria-label="Custom picture"
+            className="h-9 w-14 rounded-xl border-2 border-white/10 bg-white/5 text-center text-xl text-ink focus:border-brand-400 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <div className="mb-1 text-xs font-semibold text-slate-400">Colour</div>
+        <div className="flex flex-wrap gap-1.5">
+          {COLOUR_CHOICES.map((c) => (
+            <button
+              key={c}
+              onClick={() => setColour(c)}
+              aria-label={`colour ${c}`}
+              className={`h-8 w-8 rounded-full ${colour === c ? 'ring-2 ring-white ring-offset-2 ring-offset-night-800' : ''}`}
+              style={{ background: c }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-3">
+        <button onClick={save} disabled={!canSave} className="btn-primary text-sm">
+          Save changes
+        </button>
+        {saved && <span className="text-sm font-semibold text-mint">Saved ✓</span>}
+      </div>
     </div>
   )
 }

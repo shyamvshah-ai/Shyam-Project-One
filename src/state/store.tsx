@@ -37,6 +37,7 @@ type Action =
   | { type: 'SET_VIEW_MODE'; kid: KidId; mode: ViewMode }
   | { type: 'TOP_UP'; kid: KidId; amount: number; reason: string }
   | { type: 'CHECK_IN'; kid: KidId }
+  | { type: 'EDIT_PROFILE'; kid: KidId; name?: string; emoji?: string; colour?: string }
   | { type: 'SET_LOCK'; who: 'sai' | 'leila' | 'parent'; pin: string }
   | { type: 'RESET' }
   | { type: 'HYDRATE'; state: AppState }
@@ -159,13 +160,39 @@ function reducer(state: AppState, action: Action): AppState {
       })
     }
 
+    case 'EDIT_PROFILE': {
+      return updateKid(state, action.kid, (k) => ({
+        ...k,
+        name: action.name && action.name.trim() ? action.name.trim() : k.name,
+        emoji: action.emoji && action.emoji.trim() ? action.emoji.trim() : k.emoji,
+        colour: action.colour || k.colour,
+      }))
+    }
+
     case 'SET_LOCK': {
       const pin = action.pin.trim()
       return { ...state, locks: { ...getLocks(state), [action.who]: pin } }
     }
 
-    case 'RESET':
-      return makeInitialState()
+    case 'RESET': {
+      // "Start over" resets the money, holdings, trades, badges and streaks —
+      // but keeps who the accounts are (names, emojis, colours), their allowance
+      // amounts and any passcodes, so a family doesn't have to set all that up
+      // again every time.
+      const fresh = makeInitialState()
+      const carry = (id: KidId): KidProfile => ({
+        ...fresh.kids[id],
+        name: state.kids[id].name,
+        emoji: state.kids[id].emoji,
+        colour: state.kids[id].colour,
+        allowance: { ...fresh.kids[id].allowance, amount: state.kids[id].allowance.amount },
+      })
+      return {
+        ...fresh,
+        kids: { sai: carry('sai'), leila: carry('leila') },
+        locks: getLocks(state),
+      }
+    }
 
     case 'HYDRATE':
       // Replace all state with a version pulled from cross-device sync.
