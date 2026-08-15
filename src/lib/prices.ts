@@ -63,8 +63,24 @@ export function priceDaysAgo(ticker: string, tradingDaysAgo: number): number | u
   return s[idx]
 }
 
-/** Day-over-day change for a ticker: { change £, pct } vs the previous close. */
+/**
+ * Is the stock market open today? Prices only move on trading days, so on a
+ * weekend nothing has changed since Friday's close. (Local time = the family's
+ * time. Weekday public holidays are rare and not special-cased.)
+ */
+export function marketOpenToday(now: Date = new Date()): boolean {
+  const day = now.getDay()
+  return day !== 0 && day !== 6 // 0 = Sunday, 6 = Saturday
+}
+
+/**
+ * "Today's" change for a ticker: { change £, pct } vs the previous close. When
+ * the market is shut today (the weekend), nothing has moved since the last
+ * close, so this is zero for everything — no phantom ups and downs while the
+ * exchanges are closed.
+ */
 export function dailyChange(ticker: string): { change: number; pct: number } {
+  if (!marketOpenToday()) return { change: 0, pct: 0 }
   const s = PRICES.series[ticker]
   if (!s || s.length < 2) return { change: 0, pct: 0 }
   const today = s[s.length - 1]
