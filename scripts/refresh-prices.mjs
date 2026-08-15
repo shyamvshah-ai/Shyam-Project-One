@@ -19,7 +19,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = resolve(__dirname, '../src/data/prices.json')
 
 const CHART = 'https://query1.finance.yahoo.com/v8/finance/chart/'
-const RANGE = '2y'
+const RANGE = '5y'
 const cutoff = new Date()
 cutoff.setDate(cutoff.getDate() - 760)
 

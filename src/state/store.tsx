@@ -19,6 +19,7 @@ import {
   clearFamilyCode,
 } from '../lib/storage'
 import { makeInitialState } from '../data/seed'
+import { getLocks } from '../lib/locks'
 import { latestPrice, LATEST_DATE } from '../lib/prices'
 import { satisfiedBadges } from '../lib/badges'
 import { todayISO, weekIndex } from '../lib/format'
@@ -36,6 +37,7 @@ type Action =
   | { type: 'SET_VIEW_MODE'; kid: KidId; mode: ViewMode }
   | { type: 'TOP_UP'; kid: KidId; amount: number; reason: string }
   | { type: 'CHECK_IN'; kid: KidId }
+  | { type: 'SET_LOCK'; who: 'sai' | 'leila' | 'parent'; pin: string }
   | { type: 'RESET' }
   | { type: 'HYDRATE'; state: AppState }
 
@@ -155,6 +157,11 @@ function reducer(state: AppState, action: Action): AppState {
         const weeks = gap === 1 ? k.streak.weeks + 1 : 1 // consecutive week vs a lapse
         return { ...k, streak: { lastCheckIn: today, weeks } }
       })
+    }
+
+    case 'SET_LOCK': {
+      const pin = action.pin.trim()
+      return { ...state, locks: { ...getLocks(state), [action.who]: pin } }
     }
 
     case 'RESET':

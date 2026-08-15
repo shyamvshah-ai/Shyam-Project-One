@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ProfileId } from '../types'
 import { useStore } from '../state/store'
 import { portfolioSummary } from '../lib/portfolio'
+import { getLocks } from '../lib/locks'
 import { money } from '../lib/format'
 import { PRICES_ARE_REAL } from '../lib/prices'
 import BrandMark from './common/BrandMark'
@@ -14,6 +15,7 @@ export default function ProfilePicker({ onPick }: { onPick: (id: ProfileId) => v
   const [showSync, setShowSync] = useState(false)
   const sai = state.kids.sai
   const leila = state.kids.leila
+  const locks = getLocks(state)
 
   return (
     <div className="mx-auto flex min-h-full max-w-3xl flex-col items-center justify-center px-4 py-10">
@@ -33,6 +35,7 @@ export default function ProfilePicker({ onPick }: { onPick: (id: ProfileId) => v
           name={sai.name}
           colour={sai.colour}
           subtitle={`Worth ${money(portfolioSummary(sai).totalValue)}`}
+          locked={Boolean(locks.sai)}
           onClick={() => onPick('sai')}
         />
         <KidCard
@@ -40,6 +43,7 @@ export default function ProfilePicker({ onPick }: { onPick: (id: ProfileId) => v
           name={leila.name}
           colour={leila.colour}
           subtitle={`Worth ${money(portfolioSummary(leila).totalValue)}`}
+          locked={Boolean(locks.leila)}
           onClick={() => onPick('leila')}
         />
         <KidCard
@@ -47,6 +51,7 @@ export default function ProfilePicker({ onPick }: { onPick: (id: ProfileId) => v
           name="Parent"
           colour="#4f46e5"
           subtitle="Overview & allowance"
+          locked={Boolean(locks.parent)}
           onClick={() => onPick('parent')}
         />
       </div>
@@ -78,20 +83,31 @@ function KidCard({
   name,
   colour,
   subtitle,
+  locked,
   onClick,
 }: {
   emoji: string
   name: string
   colour: string
   subtitle: string
+  locked: boolean
   onClick: () => void
 }) {
   return (
     <button
       onClick={onClick}
-      className="card flex flex-col items-center gap-2 p-6 text-center transition hover:-translate-y-1 hover:shadow-md focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300"
+      className="card relative flex flex-col items-center gap-2 p-6 text-center transition hover:-translate-y-1 hover:shadow-md focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300"
       style={{ borderTop: `6px solid ${colour}` }}
     >
+      {locked && (
+        <span
+          className="absolute right-3 top-3 text-lg text-slate-400"
+          title="Locked — needs a code"
+          aria-label="Locked"
+        >
+          🔒
+        </span>
+      )}
       <span className="text-6xl">{emoji}</span>
       <span className="text-xl font-extrabold text-ink">{name}</span>
       <span className="text-sm text-slate-400">{subtitle}</span>

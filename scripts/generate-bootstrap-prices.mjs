@@ -16,7 +16,7 @@ import { mulberry32, hashSeed, businessDays, round2 } from './_shared.mjs'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = resolve(__dirname, '../src/data/prices.json')
 
-const TRADING_DAYS = 504 // ~2 years of weekdays
+const TRADING_DAYS = 1260 // ~5 years of weekdays
 const END = new Date('2026-08-10T00:00:00Z')
 
 const dates = businessDays(END, TRADING_DAYS)

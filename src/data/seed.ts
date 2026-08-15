@@ -1,6 +1,7 @@
 import type { AppState, KidProfile } from '../types'
 import { LATEST_DATE } from '../lib/prices'
 import { newId } from '../lib/storage'
+import { emptyLocks } from '../lib/locks'
 
 // Both children start fresh today with £1,000 of pretend money and nothing
 // invested yet — a clean slate to make their own choices. The Parent can add
@@ -47,5 +48,6 @@ export function makeInitialState(): AppState {
       sai: buildKid(SEED[0]),
       leila: buildKid(SEED[1]),
     },
+    locks: emptyLocks(),
   }
 }

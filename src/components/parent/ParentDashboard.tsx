@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { KidProfile } from '../../types'
 import { useStore } from '../../state/store'
 import { portfolioSummary } from '../../lib/portfolio'
+import { getLocks } from '../../lib/locks'
 import { money, moneyExact, niceDate } from '../../lib/format'
 import { Card, GainPill, SectionTitle } from '../common/ui'
 
@@ -67,6 +68,25 @@ export default function ParentDashboard({
       </Card>
 
       <Card>
+        <SectionTitle>Passcodes</SectionTitle>
+        <p className="mb-3 text-sm text-slate-400">
+          Give each child a 4-digit code so they can’t open each other’s account. Set a{' '}
+          <strong>grown-up code</strong> too — it locks this Parent area and works as a master
+          key that opens either child.{' '}
+          {familyCode && 'Codes apply on every synced device.'}
+        </p>
+        <div className="space-y-2">
+          <LockRow who="sai" label={`${state.kids.sai.emoji} ${state.kids.sai.name}`} />
+          <LockRow who="leila" label={`${state.kids.leila.emoji} ${state.kids.leila.name}`} />
+          <LockRow who="parent" label="🧑‍💼 Grown-up (Parent area)" />
+        </div>
+        <p className="mt-3 text-xs text-slate-500">
+          A light lock for pretend money — not real security. If a code is forgotten, set a new
+          one here (or clear it).
+        </p>
+      </Card>
+
+      <Card>
         <SectionTitle>Start over</SectionTitle>
         <p className="mb-3 text-sm text-slate-400">
           Reset <strong>both children</strong> back to £1,000 with nothing invested — clears all
@@ -80,6 +100,52 @@ export default function ParentDashboard({
           ↺ Start everyone over
         </button>
       </Card>
+    </div>
+  )
+}
+
+function LockRow({ who, label }: { who: 'sai' | 'leila' | 'parent'; label: string }) {
+  const { state, dispatch } = useStore()
+  const current = getLocks(state)[who]
+  const [entry, setEntry] = useState('')
+
+  const clean = entry.replace(/\D/g, '').slice(0, 4)
+  const canSave = clean.length === 4 && clean !== current
+
+  const save = () => {
+    if (!canSave) return
+    dispatch({ type: 'SET_LOCK', who, pin: clean })
+    setEntry('')
+  }
+
+  return (
+    <div className="flex items-center gap-2 rounded-2xl bg-white/5 p-3">
+      <div className="flex-1">
+        <div className="font-bold text-ink">{label}</div>
+        <div className="text-xs text-slate-400">{current ? '🔒 Code set' : '🔓 No code'}</div>
+      </div>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={4}
+        value={entry}
+        placeholder={current ? '••••' : 'set code'}
+        onChange={(e) => setEntry(e.target.value.replace(/\D/g, '').slice(0, 4))}
+        onKeyDown={(e) => e.key === 'Enter' && save()}
+        className="w-24 rounded-xl border-2 border-white/10 bg-white/5 py-2 text-center font-mono text-lg tracking-widest text-ink placeholder:text-sm placeholder:tracking-normal placeholder:text-slate-500 focus:border-brand-400 focus:outline-none"
+      />
+      <button onClick={save} disabled={!canSave} className="btn-primary text-sm">
+        {current ? 'Change' : 'Set'}
+      </button>
+      {current && (
+        <button
+          onClick={() => dispatch({ type: 'SET_LOCK', who, pin: '' })}
+          className="btn-ghost text-sm"
+        >
+          Clear
+        </button>
+      )}
     </div>
   )
 }

@@ -127,10 +127,24 @@ export interface KidProfile {
   }
 }
 
+/**
+ * Optional passcodes that lock each profile on the picker. An empty string means
+ * "no lock" for that profile. The grown-up code also unlocks either child (a
+ * master key). This is a light lock to stop the children opening each other's
+ * account — it is pretend money, not real security.
+ */
+export interface Locks {
+  sai: string
+  leila: string
+  parent: string
+}
+
 /** Full persisted app state. */
 export interface AppState {
   version: number
   kids: Record<'sai' | 'leila', KidProfile>
+  /** Passcodes per profile. Optional so state saved before this feature loads. */
+  locks?: Locks
 }
 
 export type ProfileId = 'sai' | 'leila' | 'parent'

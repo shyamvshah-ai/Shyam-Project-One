@@ -17,6 +17,7 @@ export const RANGES = [
   { label: '1M', days: 21 },
   { label: '3M', days: 63 },
   { label: '1Y', days: 252 },
+  { label: '5Y', days: 1260 },
   { label: 'All', days: 0 },
 ]
 
