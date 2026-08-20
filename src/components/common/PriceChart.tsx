@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { priceHistory } from '../../lib/prices'
+import { priceHistory, priceHistorySince } from '../../lib/prices'
 import { moneyExact, shortDate } from '../../lib/format'
 
 // Shared time ranges for every price chart in the app.
@@ -22,18 +22,29 @@ export const RANGES = [
 ]
 
 // A single holding/asset price line, in £, with an auto-zoomed vertical axis so
-// movement is visible. `days` of 0 means the full history.
+// movement is visible. Pass `since` (an ISO date) to start the line there — e.g.
+// the day the child bought it — otherwise `days` limits it (0 = full history).
 export default function PriceChart({
   ticker,
-  days,
+  days = 0,
+  since,
   height = 200,
 }: {
   ticker: string
-  days: number
+  days?: number
+  since?: string
   height?: number
 }) {
-  const data = useMemo(() => priceHistory(ticker, days || undefined), [ticker, days])
-  if (data.length < 2) return <p className="text-slate-400">Not enough price history yet.</p>
+  const data = useMemo(
+    () => (since ? priceHistorySince(ticker, since) : priceHistory(ticker, days || undefined)),
+    [ticker, days, since],
+  )
+  if (data.length < 2)
+    return (
+      <p className="py-6 text-center text-sm text-slate-400">
+        This chart fills in as the days go by — check back tomorrow!
+      </p>
+    )
   const rising = data[data.length - 1].price >= data[0].price
   const colour = rising ? '#34d399' : '#fb7185'
   return (

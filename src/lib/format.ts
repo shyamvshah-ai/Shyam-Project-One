@@ -96,6 +96,30 @@ export function weekIndex(iso: string): number {
   return Math.floor(new Date(iso + 'T00:00:00Z').getTime() / (7 * 86_400_000))
 }
 
+/** Format a Date as a local (not UTC) YYYY-MM-DD, to line up with price dates. */
+function isoLocal(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/** ISO date of the Monday that begins the current week (local time). */
+export function weekStartISO(now: Date = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const dow = d.getDay() // 0 = Sunday .. 6 = Saturday
+  const toMonday = dow === 0 ? -6 : 1 - dow
+  d.setDate(d.getDate() + toMonday)
+  return isoLocal(d)
+}
+
+/** Shift an ISO date by a number of days, returning a new ISO date. */
+export function addDaysISO(iso: string, days: number): string {
+  const d = new Date(iso + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return isoLocal(d)
+}
+
 /** Has the child already checked in during the current calendar week? */
 export function isThisWeek(iso: string | null): boolean {
   return iso != null && weekIndex(iso) === weekIndex(todayISO())

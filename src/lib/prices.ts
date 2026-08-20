@@ -1,5 +1,6 @@
 import type { PriceData } from '../types'
 import pricesJson from '../data/prices.json'
+import { weekStartISO, addDaysISO } from './format'
 
 // The single place the app reads price data. It's a static local file written
 // by the price scripts — there are no network calls at runtime.
@@ -89,6 +90,23 @@ export function dailyChange(ticker: string): { change: number; pct: number } {
   return { change, pct: prev === 0 ? 0 : change / prev }
 }
 
+/**
+ * Change for a ticker since the current week began: { change £, pct }. The
+ * baseline is the close going into this week (the previous Friday), so this
+ * shows how the price has moved so far this week. Unlike the daily change it is
+ * *not* zeroed at the weekend — reviewing the week's move on a Saturday is the
+ * whole point.
+ */
+export function weeklyChange(ticker: string): { change: number; pct: number } {
+  const s = PRICES.series[ticker]
+  if (!s || s.length === 0) return { change: 0, pct: 0 }
+  const latest = s[s.length - 1]
+  const base = priceOn(ticker, addDaysISO(weekStartISO(), -1))
+  if (base === undefined) return { change: 0, pct: 0 }
+  const change = latest - base
+  return { change, pct: base === 0 ? 0 : change / base }
+}
+
 export interface PricePoint {
   date: string
   price: number
@@ -105,6 +123,17 @@ export function priceHistory(ticker: string, days?: number): PricePoint[] {
   const out: PricePoint[] = []
   for (let i = start; i < s.length; i++) {
     out.push({ date: PRICES.dates[i], price: s[i] })
+  }
+  return out
+}
+
+/** Price history as chart-ready points from `sinceISO` (inclusive) onward. */
+export function priceHistorySince(ticker: string, sinceISO: string): PricePoint[] {
+  const s = PRICES.series[ticker]
+  if (!s) return []
+  const out: PricePoint[] = []
+  for (let i = 0; i < s.length; i++) {
+    if (PRICES.dates[i] >= sinceISO) out.push({ date: PRICES.dates[i], price: s[i] })
   }
   return out
 }

@@ -1,5 +1,5 @@
 import type { Holding, KidProfile } from '../types'
-import { ALL_DATES, dailyChange, latestPrice, priceOn } from './prices'
+import { ALL_DATES, dailyChange, latestPrice, priceOn, weeklyChange } from './prices'
 
 // All the money maths in one place. Everything is virtual £.
 
@@ -19,6 +19,9 @@ export interface HoldingView {
   /** Today's £ move for this position vs yesterday's close. */
   dayChange: number
   dayChangePct: number
+  /** This position's £ move since the week began. */
+  weekChange: number
+  weekChangePct: number
 }
 
 /** Build a display-ready view of one holding at the latest price. */
@@ -29,6 +32,7 @@ export function holdingView(h: Holding): HoldingView | null {
   const cost = h.avgCost * h.shares
   const gain = value - cost
   const day = dailyChange(h.ticker)
+  const week = weeklyChange(h.ticker)
   return {
     ticker: h.ticker,
     shares: h.shares,
@@ -40,6 +44,8 @@ export function holdingView(h: Holding): HoldingView | null {
     gainPct: cost === 0 ? 0 : gain / cost,
     dayChange: day.change * h.shares,
     dayChangePct: day.pct,
+    weekChange: week.change * h.shares,
+    weekChangePct: week.pct,
   }
 }
 
@@ -55,6 +61,8 @@ export interface PortfolioSummary {
   totalGainPct: number
   /** Today's £ move across all holdings. */
   dayChange: number
+  /** £ move across all holdings since the week began. */
+  weekChange: number
   /** Cost basis + unrealised gain across held positions (for the detailed view). */
   investedCost: number
   investedGain: number
@@ -70,6 +78,7 @@ export function portfolioSummary(kid: KidProfile): PortfolioSummary {
   const investedCost = holdings.reduce((s, h) => s + h.cost, 0)
   const investedGain = holdings.reduce((s, h) => s + h.gain, 0)
   const dayChange = holdings.reduce((s, h) => s + h.dayChange, 0)
+  const weekChange = holdings.reduce((s, h) => s + h.weekChange, 0)
   const totalDeposited = kid.deposits.reduce((s, d) => s + d.amount, 0)
   const totalValue = kid.cash + holdingsValue
   const totalGain = totalValue - totalDeposited
@@ -82,6 +91,7 @@ export function portfolioSummary(kid: KidProfile): PortfolioSummary {
     totalGain,
     totalGainPct: totalDeposited === 0 ? 0 : totalGain / totalDeposited,
     dayChange,
+    weekChange,
     investedCost,
     investedGain,
     holdings,
@@ -147,16 +157,29 @@ export function valueHistory(kid: KidProfile): ValuePoint[] {
   return out
 }
 
+/** ISO date of the child's very first trade, or undefined if they've made none. */
+export function firstTradeDate(kid: KidProfile): string | undefined {
+  if (kid.trades.length === 0) return undefined
+  return kid.trades.reduce((min, t) => (t.date < min ? t.date : min), kid.trades[0].date)
+}
+
+/** ISO date the child first bought this ticker, or undefined if they never did. */
+export function firstBuyDate(kid: KidProfile, ticker: string): string | undefined {
+  const buys = kid.trades.filter((t) => t.ticker === ticker && t.action === 'buy')
+  if (buys.length === 0) return undefined
+  return buys.reduce((min, t) => (t.date < min ? t.date : min), buys[0].date)
+}
+
 /**
- * Worth of what the child holds *right now*, valued across the last `days`
- * trading days (0 = all history), plus their current cash. This always shows
- * real movement once they own something — unlike the trade-log reconstruction,
- * which can't curve when every trade happened on the same latest price date.
- * The `deposited` field is a flat reference line ("money paid in").
+ * Worth of what the child holds *right now*, valued each trading day from
+ * `sinceISO` (their first trade) up to the latest price, plus their current
+ * cash. This always shows real movement once they own something — unlike the
+ * trade-log reconstruction, which can't curve when every trade happened on the
+ * same latest price date. The `deposited` field is a flat reference line.
  */
-export function currentWorthHistory(kid: KidProfile, days: number): ValuePoint[] {
+export function currentWorthHistory(kid: KidProfile, sinceISO?: string): ValuePoint[] {
   if (kid.holdings.length === 0) return []
-  const dates = days > 0 ? ALL_DATES.slice(-days) : ALL_DATES
+  const dates = sinceISO ? ALL_DATES.filter((d) => d >= sinceISO) : ALL_DATES
   const deposited = kid.deposits.reduce((s, d) => s + d.amount, 0)
   return dates.map((date) => {
     let holdingsValue = 0

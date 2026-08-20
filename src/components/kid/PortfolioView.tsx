@@ -1,9 +1,9 @@
 import type { Asset, KidProfile, TradeAction } from '../../types'
-import { portfolioSummary, type HoldingView } from '../../lib/portfolio'
+import { portfolioSummary, firstBuyDate, type HoldingView } from '../../lib/portfolio'
 import { getAsset } from '../../data/universe'
-import { priceHistory } from '../../lib/prices'
+import { priceHistory, priceHistorySince } from '../../lib/prices'
 import { money, moneyExact, moneySigned, percent, shares as fmtShares } from '../../lib/format'
-import { Card, GainPill, Sparkline, toneClasses } from '../common/ui'
+import { Card, GainPill, MiniChart, toneClasses } from '../common/ui'
 import Jargon from '../common/Jargon'
 import CompanyLogo from '../common/CompanyLogo'
 
@@ -42,10 +42,10 @@ export default function PortfolioView({
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <MiniStat label="Spending cash" value={moneyExact(p.cash)} emoji="👛" jargon="cash" />
           <MiniStat
-            label="Today’s change"
-            value={moneySigned(p.dayChange)}
-            emoji={p.dayChange >= 0 ? '☀️' : '🌧️'}
-            tone={p.dayChange}
+            label="This week’s change"
+            value={moneySigned(p.weekChange)}
+            emoji={p.weekChange >= 0 ? '📈' : '📉'}
+            tone={p.weekChange}
           />
           {detailed && (
             <MiniStat label="Money paid in" value={money(p.totalDeposited)} emoji="🐷" />
@@ -75,6 +75,7 @@ export default function PortfolioView({
               .map((h) => (
                 <HoldingRow
                   key={h.ticker}
+                  kid={kid}
                   view={h}
                   totalValue={p.holdingsValue}
                   detailed={detailed}
@@ -113,11 +114,13 @@ function MiniStat({
 }
 
 function HoldingRow({
+  kid,
   view,
   totalValue,
   detailed,
   onTrade,
 }: {
+  kid: KidProfile
   view: HoldingView
   totalValue: number
   detailed: boolean
@@ -126,6 +129,9 @@ function HoldingRow({
   const asset = getAsset(view.ticker)
   if (!asset) return null
   const weight = totalValue > 0 ? view.value / totalValue : 0
+  // The holding's price since the day it was first bought (their own story).
+  const since = firstBuyDate(kid, view.ticker)
+  const points = since ? priceHistorySince(view.ticker, since) : priceHistory(view.ticker, 60)
 
   return (
     <Card className="!p-3">
@@ -152,10 +158,6 @@ function HoldingRow({
           )}
         </div>
 
-        <div className="hidden sm:block">
-          <Sparkline points={priceHistory(view.ticker, 60)} />
-        </div>
-
         <div className="flex flex-col gap-1">
           <button className="btn-primary !px-3 !py-1 text-sm" onClick={() => onTrade(asset, 'buy')}>
             Buy
@@ -167,6 +169,11 @@ function HoldingRow({
             Sell
           </button>
         </div>
+      </div>
+
+      {/* Chart tile — this holding's price since the child bought it. */}
+      <div className="mt-3">
+        <MiniChart points={points} />
       </div>
     </Card>
   )

@@ -10,24 +10,25 @@ import {
   YAxis,
 } from 'recharts'
 import type { KidProfile } from '../../types'
-import { currentWorthHistory } from '../../lib/portfolio'
+import { currentWorthHistory, firstBuyDate, firstTradeDate } from '../../lib/portfolio'
 import { getAsset } from '../../data/universe'
-import { money, percent, shortDate } from '../../lib/format'
+import { money, percent, shortDate, niceDate } from '../../lib/format'
 import { Card, SectionTitle } from '../common/ui'
-import PriceChart, { RANGES } from '../common/PriceChart'
+import PriceChart from '../common/PriceChart'
 
-// "Charts" — how the whole portfolio has grown, and each holding's price.
-// A time-range toggle controls both charts; the vertical axis auto-zooms so
-// movement is easy to see (not a flat line filling the box).
+// "Charts" — how the whole portfolio has grown, and each holding's price. Every
+// chart starts on the day the child first invested, so it tells their real
+// story from the beginning. The vertical axis auto-zooms so movement is easy to
+// see (not a flat line filling the box).
 
 export default function ChartsView({ kid, detailed }: { kid: KidProfile; detailed: boolean }) {
   const owned = kid.holdings.map((h) => h.ticker)
   const [ticker, setTicker] = useState<string>(owned[0] ?? '')
-  const [rangeIdx, setRangeIdx] = useState(2) // default 3M
 
-  const days = RANGES[rangeIdx].days
-  const history = useMemo(() => currentWorthHistory(kid, days), [kid, days])
+  const startDate = firstTradeDate(kid)
+  const history = useMemo(() => currentWorthHistory(kid, startDate), [kid, startDate])
   const hasHoldings = kid.holdings.length > 0
+  const enoughHistory = history.length >= 2
 
   const first = history[0]?.value ?? 0
   const last = history[history.length - 1]?.value ?? 0
@@ -36,21 +37,6 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
 
   return (
     <div className="space-y-4">
-      {/* Shared time-range toggle */}
-      <div className="flex justify-center gap-1">
-        {RANGES.map((r, i) => (
-          <button
-            key={r.label}
-            onClick={() => setRangeIdx(i)}
-            className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
-              rangeIdx === i ? 'bg-mint text-night-900 shadow-sm' : 'bg-white/5 text-slate-400'
-            }`}
-          >
-            {r.label}
-          </button>
-        ))}
-      </div>
-
       <Card>
         <SectionTitle>Your investments over time</SectionTitle>
         {!hasHoldings ? (
@@ -58,14 +44,21 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
             You’re starting fresh with {money(kid.cash)}! Buy your first investment and this chart
             will show how it moves up and down over time.
           </p>
+        ) : !enoughHistory ? (
+          <p className="text-slate-400">
+            Nice — you’ve made your first investment! This chart starts filling in from tomorrow, so
+            check back to watch your money’s story unfold.
+          </p>
         ) : (
           <>
-            <div className="mb-2 flex items-baseline gap-2">
+            <div className="mb-2 flex flex-wrap items-baseline gap-2">
               <span className="text-2xl font-extrabold text-ink">{money(last)}</span>
               <span className={`font-semibold ${change >= 0 ? 'text-up' : 'text-down'}`}>
                 {change >= 0 ? '▲' : '▼'} {money(Math.abs(change))} ({percent(changePct)})
               </span>
-              <span className="text-sm text-slate-500">over {RANGES[rangeIdx].label}</span>
+              {startDate && (
+                <span className="text-sm text-slate-500">since you started ({niceDate(startDate)})</span>
+              )}
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={history} margin={{ top: 5, right: 5, left: -18, bottom: 0 }}>
@@ -143,7 +136,7 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
                 )
               })}
             </div>
-            <PriceChart ticker={ticker} days={days} />
+            <PriceChart ticker={ticker} since={firstBuyDate(kid, ticker)} />
           </>
         )}
       </Card>
