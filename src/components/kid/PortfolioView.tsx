@@ -170,13 +170,12 @@ function HoldingRow({
         </div>
       </div>
 
-      {/* Chart tile — this holding's price since the child bought it, with
-          labelled axes and a "you bought here" line so the change since buying
-          is easy to read. The vertical scale hugs the real price range, so the
-          height of the move matches how big the move actually was. */}
+      {/* Chart tile — how much this holding is up or down (in %) since the day
+          the child bought it. The 0% line is where they bought; the axis uses
+          round-number % steps so it's easy to read. */}
       <div className="mt-3 rounded-2xl bg-white/5 px-1 pb-1 pt-2">
         <div className="px-2 pb-1 text-xs font-semibold text-slate-400">
-          Price since you bought it
+          Change since you bought it
         </div>
         <PriceChart
           ticker={view.ticker}
@@ -184,9 +183,8 @@ function HoldingRow({
           days={since ? 0 : 60}
           height={168}
           xLabel="Date"
-          yLabel="Price (£)"
-          buyPrice={view.avgCost}
-          fitDomain
+          yLabel="Change (%)"
+          percentFrom={view.avgCost}
         />
       </div>
     </Card>
