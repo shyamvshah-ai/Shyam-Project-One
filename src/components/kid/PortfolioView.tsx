@@ -147,7 +147,7 @@ function HoldingRow({
           </div>
           <div className="mt-0.5 flex items-center gap-2">
             <span className="text-lg font-extrabold text-ink">{money(view.value)}</span>
-            <GainPill amount={view.gain} pct={view.gainPct} simple={!detailed} size="sm" />
+            <GainPill amount={view.gain} pct={view.gainPct} size="sm" pctOnly />
           </div>
           {detailed && (
             <div className="mt-0.5 text-xs text-slate-400">
@@ -171,12 +171,9 @@ function HoldingRow({
       </div>
 
       {/* Chart tile — how much this holding is up or down (in %) since the day
-          the child bought it. The 0% line is where they bought; the axis uses
-          round-number % steps so it's easy to read. */}
+          the child bought it. It starts at 0%; the dashed 0% line is where they
+          bought; the axis uses round-number % steps. */}
       <div className="mt-3 rounded-2xl bg-white/5 px-1 pb-1 pt-2">
-        <div className="px-2 pb-1 text-xs font-semibold text-slate-400">
-          Change since you bought it
-        </div>
         <PriceChart
           ticker={view.ticker}
           since={since}
@@ -184,7 +181,7 @@ function HoldingRow({
           height={168}
           xLabel="Date"
           yLabel="Change (%)"
-          percentFrom={view.avgCost}
+          percent
         />
       </div>
     </Card>

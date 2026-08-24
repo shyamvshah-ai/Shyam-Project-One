@@ -37,18 +37,21 @@ export function arrow(n: number): string {
 
 /**
  * A coloured pill showing a gain/loss. `simple` hides the % for the youngest
- * users and keeps just the friendly arrow + £.
+ * users and keeps just the friendly arrow + £. `pctOnly` instead shows just the
+ * percentage move (arrow + %), used where the £ figure is shown elsewhere.
  */
 export function GainPill({
   amount,
   pct,
   simple = false,
   size = 'md',
+  pctOnly = false,
 }: {
   amount: number
   pct?: number
   simple?: boolean
   size?: 'sm' | 'md' | 'lg'
+  pctOnly?: boolean
 }) {
   const tone = toneClasses(amount)
   const sizeCls =
@@ -56,8 +59,14 @@ export function GainPill({
   return (
     <span className={`pill ${tone.bg} ${tone.text} ${sizeCls}`}>
       <span aria-hidden>{arrow(amount)}</span>
-      {moneySigned(amount)}
-      {!simple && pct !== undefined && <span className="opacity-75">({percent(pct)})</span>}
+      {pctOnly && pct !== undefined ? (
+        percent(pct, 1)
+      ) : (
+        <>
+          {moneySigned(amount)}
+          {!simple && pct !== undefined && <span className="opacity-75">({percent(pct)})</span>}
+        </>
+      )}
     </span>
   )
 }

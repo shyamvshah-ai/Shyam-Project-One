@@ -23,24 +23,32 @@ export const RANGES = [
   { label: 'All', days: 0 },
 ]
 
-/** A "nice" round step (…1, 2, 2.5, 5, 10, 20…) at or just above `x`. */
+/** A "nice" round, whole-number step (…1, 2, 5, 10, 20, 50…) at or above `x`. */
 function niceStep(x: number): number {
-  if (x <= 0) return 1
+  if (!isFinite(x) || x <= 0) return 1
   const pow = Math.pow(10, Math.floor(Math.log10(x)))
   const n = x / pow
-  const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10
+  const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10
   return m * pow
 }
 
-/** Round tick marks spanning [min, max], always including 0, ~4 steps. */
+/**
+ * Whole-number % tick marks spanning [min, max] and always including 0. Steps
+ * are at least 1 apart so two ticks can never both round to "0%", and a flat
+ * line still gets a sensible ±1% window.
+ */
 function roundTicks(min: number, max: number): { lo: number; hi: number; ticks: number[] } {
-  const from = Math.min(min, 0)
-  const to = Math.max(max, 0)
-  const step = niceStep((to - from || 1) / 4)
+  let from = Math.min(min, 0)
+  let to = Math.max(max, 0)
+  if (from === to) {
+    from -= 1
+    to += 1
+  }
+  const step = Math.max(1, Math.round(niceStep((to - from) / 4)))
   const lo = Math.floor(from / step) * step
   const hi = Math.ceil(to / step) * step
   const ticks: number[] = []
-  for (let v = lo; v <= hi + step / 1000; v += step) ticks.push(Math.round(v * 100) / 100)
+  for (let v = lo; v <= hi + step / 2; v += step) ticks.push(v)
   return { lo, hi, ticks }
 }
 
@@ -49,9 +57,10 @@ function roundTicks(min: number, max: number): { lo: number; hi: number; ticks: 
 // history). Default mode plots the price in £ with an auto-zoomed axis.
 //
 // Extras for the "My Money" holding tiles: `xLabel`/`yLabel` add axis titles, and
-// `percentFrom` switches the line to show the *percentage change* since that
-// price (the buy price). In that mode the vertical axis uses round-number %
-// steps, a 0% baseline marks where they bought, and the tooltip reads in %.
+// `percent` switches the line to show the *percentage change* since the first day
+// shown — so every chart starts at 0%. In that mode the vertical axis uses
+// round-number % steps, a dashed 0% line marks where they bought, and the
+// tooltip reads in %.
 export default function PriceChart({
   ticker,
   days = 0,
@@ -59,7 +68,7 @@ export default function PriceChart({
   height = 200,
   xLabel,
   yLabel,
-  percentFrom,
+  percent = false,
 }: {
   ticker: string
   days?: number
@@ -67,7 +76,7 @@ export default function PriceChart({
   height?: number
   xLabel?: string
   yLabel?: string
-  percentFrom?: number
+  percent?: boolean
 }) {
   const raw = useMemo(
     () => (since ? priceHistorySince(ticker, since) : priceHistory(ticker, days || undefined)),
@@ -80,11 +89,14 @@ export default function PriceChart({
       </p>
     )
 
-  const percentMode = percentFrom !== undefined && percentFrom > 0
-  // In percent mode we plot each day's move against the buy price.
-  const data = percentMode
-    ? raw.map((p) => ({ date: p.date, value: (p.price / percentFrom - 1) * 100 }))
-    : raw.map((p) => ({ date: p.date, value: p.price }))
+  // Percent mode: measure every day against the first day shown, so the line
+  // always begins at exactly 0%.
+  const base = raw[0].price
+  const data =
+    percent && base > 0
+      ? raw.map((p) => ({ date: p.date, value: (p.price / base - 1) * 100 }))
+      : raw.map((p) => ({ date: p.date, value: p.price }))
+  const percentMode = percent && base > 0
 
   const rising = data[data.length - 1].value >= data[0].value
   const colour = rising ? '#34d399' : '#fb7185'
@@ -101,8 +113,9 @@ export default function PriceChart({
     yTicks = ticks
   }
 
-  const fmtPct = (v: number) => `${v > 0 ? '+' : ''}${Math.round(v)}%`
-  const yTickFormatter = percentMode ? fmtPct : (v: number) => moneyExact(v)
+  const fmtPctWhole = (v: number) => `${v > 0 ? '+' : ''}${Math.round(v)}%`
+  const fmtPctExact = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`
+  const yTickFormatter = percentMode ? fmtPctWhole : (v: number) => moneyExact(v)
 
   // Titled axes need room; the compact modal chart keeps its tight margins.
   const margin = labelled
@@ -113,11 +126,7 @@ export default function PriceChart({
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={margin}>
         {/* Horizontal-only grid keeps the tile calm. */}
-        <CartesianGrid
-          vertical={false}
-          strokeDasharray="3 3"
-          stroke="rgba(255,255,255,0.06)"
-        />
+        <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
         <XAxis
           dataKey="date"
           tickFormatter={shortDate}
@@ -146,14 +155,21 @@ export default function PriceChart({
           )}
         </YAxis>
         <Tooltip
-          formatter={(v: number) => [percentMode ? fmtPct(v) : moneyExact(v), percentMode ? 'Change' : 'Price']}
+          formatter={(v: number) => [percentMode ? fmtPctExact(v) : moneyExact(v), percentMode ? 'Change' : 'Price']}
           labelFormatter={(l) => shortDate(String(l))}
         />
         {/* 0% baseline = the price they bought at (no label needed). */}
         {percentMode && (
           <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" strokeWidth={1.5} />
         )}
-        <Line type="monotone" dataKey="value" stroke={colour} strokeWidth={3} dot={false} />
+        {/* Straight segments — the price path, not a smoothed curve. */}
+        <Line
+          type={percentMode ? 'linear' : 'monotone'}
+          dataKey="value"
+          stroke={colour}
+          strokeWidth={3}
+          dot={false}
+        />
       </LineChart>
     </ResponsiveContainer>
   )
