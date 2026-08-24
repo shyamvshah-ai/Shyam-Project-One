@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Asset, TradeAction } from '../../types'
-import { dailyChange, latestPrice, localPrice } from '../../lib/prices'
+import { latestPrice, localPrice, priceHistory } from '../../lib/prices'
 import { moneyExact, localMoney } from '../../lib/format'
 import { GainPill } from '../common/ui'
 import CompanyLogo from '../common/CompanyLogo'
@@ -23,7 +23,15 @@ export default function AssetChartModal({
   const [rangeIdx, setRangeIdx] = useState(3) // default 1Y
   const price = latestPrice(asset.ticker) ?? 0
   const local = localPrice(asset.ticker)
-  const day = dailyChange(asset.ticker)
+
+  // The change shown matches the chart's window: first point → latest, over the
+  // selected range. So picking "5Y" shows the 5-year move, "1M" the month, etc.
+  const range = RANGES[rangeIdx]
+  const series = priceHistory(asset.ticker, range.days || undefined)
+  const startPrice = series.length ? series[0].price : price
+  const rangeChange = series.length ? series[series.length - 1].price - startPrice : 0
+  const rangePct = startPrice ? rangeChange / startPrice : 0
+  const periodLabel = range.label === 'All' ? 'all time' : `past ${range.label}`
 
   return (
     <div
@@ -58,7 +66,8 @@ export default function AssetChartModal({
               {localMoney(local.currency, local.price)}
             </span>
           )}
-          <GainPill amount={day.change} pct={day.pct} simple={!detailed} size="sm" />
+          <GainPill amount={rangeChange} pct={rangePct} simple={!detailed} size="sm" />
+          <span className="text-xs font-semibold text-slate-400">{periodLabel}</span>
         </div>
 
         <div className="mb-2 flex gap-1">
