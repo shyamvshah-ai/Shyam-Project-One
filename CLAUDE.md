@@ -78,14 +78,17 @@ So verify UI changes with **Playwright against a local preview**:
 
 ## File map (the bits you'll touch most)
 
-- `src/components/kid/` — `PortfolioView` (My Money), `ExploreView`,
-  `TradeModal` (buy/sell in £), `ChartsView`, `AssetChartModal`, `RewardsView`,
+- `src/components/kid/` — `PortfolioView` (My Money; each holding shows a small
+  tap-to-expand sparkline tile), `ExploreView`, `TradeModal` (buy/sell in £),
+  `ChartsView`, `AssetChartModal` (Explore £ chart, change matches the range),
+  `HoldingChartModal` (the expanded % -since-bought chart), `RewardsView`,
   `JournalView` (diary), `KidDashboard`.
 - `src/components/parent/ParentDashboard.tsx` — overview, allowance, edit
   profiles, passcodes, start-over.
-- `src/components/common/` — `PriceChart` (labelled line chart; the My Money
-  holding tiles pass `xLabel`/`yLabel`/`buyPrice`/`fitDomain`), `ui.tsx` (Card,
-  GainPill, Sparkline), `CompanyLogo`, `Jargon`.
+- `src/components/common/` — `PriceChart` (labelled line chart; `percent` +
+  `percentBase` switches it to show % change vs the average buy price, starting
+  at 0% and ending on the holding's real gain), `ui.tsx` (Card, GainPill with a
+  `pctOnly` mode, Sparkline), `CompanyLogo`, `Jargon`.
 - `src/lib/` — `prices.ts`, `portfolio.ts` (all the money maths), `format.ts`
   (money + date helpers), `locks.ts`, `storage.ts`.
 - `src/data/` — `universe.ts` (the investable list + blurbs), `prices.json`,

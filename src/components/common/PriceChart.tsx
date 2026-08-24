@@ -57,10 +57,11 @@ function roundTicks(min: number, max: number): { lo: number; hi: number; ticks: 
 // history). Default mode plots the price in £ with an auto-zoomed axis.
 //
 // Extras for the "My Money" holding tiles: `xLabel`/`yLabel` add axis titles, and
-// `percent` switches the line to show the *percentage change* since the first day
-// shown — so every chart starts at 0%. In that mode the vertical axis uses
-// round-number % steps, a dashed 0% line marks where they bought, and the
-// tooltip reads in %.
+// `percent` switches the line to show the *percentage change*. It starts at 0%
+// and measures each day against `percentBase` (the average buy price) if given,
+// otherwise the first day shown — so the latest point equals the holding's real
+// gain/loss. In that mode the vertical axis uses round-number % steps, a dashed
+// 0% line marks where they bought, and the tooltip reads in %.
 export default function PriceChart({
   ticker,
   days = 0,
@@ -69,6 +70,7 @@ export default function PriceChart({
   xLabel,
   yLabel,
   percent = false,
+  percentBase,
 }: {
   ticker: string
   days?: number
@@ -77,6 +79,7 @@ export default function PriceChart({
   xLabel?: string
   yLabel?: string
   percent?: boolean
+  percentBase?: number
 }) {
   const raw = useMemo(
     () => (since ? priceHistorySince(ticker, since) : priceHistory(ticker, days || undefined)),
@@ -89,14 +92,14 @@ export default function PriceChart({
       </p>
     )
 
-  // Percent mode: measure every day against the first day shown, so the line
-  // always begins at exactly 0%.
-  const base = raw[0].price
-  const data =
-    percent && base > 0
-      ? raw.map((p) => ({ date: p.date, value: (p.price / base - 1) * 100 }))
-      : raw.map((p) => ({ date: p.date, value: p.price }))
-  const percentMode = percent && base > 0
+  // Percent mode: measure every day against the average buy price (so the last
+  // point equals the holding's real gain, matching its pill), and pin the very
+  // first day to exactly 0% — that's the moment they bought.
+  const pctBase = percentBase && percentBase > 0 ? percentBase : raw[0].price
+  const percentMode = percent && pctBase > 0
+  const data = percentMode
+    ? raw.map((p, i) => ({ date: p.date, value: i === 0 ? 0 : (p.price / pctBase - 1) * 100 }))
+    : raw.map((p) => ({ date: p.date, value: p.price }))
 
   const rising = data[data.length - 1].value >= data[0].value
   const colour = rising ? '#34d399' : '#fb7185'

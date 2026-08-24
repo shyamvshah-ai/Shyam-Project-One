@@ -76,10 +76,13 @@ export function Sparkline({
   points,
   width = 120,
   height = 36,
+  color,
 }: {
   points: PricePoint[]
   width?: number
   height?: number
+  /** Force the line colour; otherwise it's green/red by the window's direction. */
+  color?: string
 }) {
   if (points.length < 2) return <div style={{ width, height }} />
   const prices = points.map((p) => p.price)
@@ -95,7 +98,7 @@ export function Sparkline({
     })
     .join(' ')
   const rising = prices[prices.length - 1] >= prices[0]
-  const colour = rising ? '#34d399' : '#fb7185'
+  const colour = color ?? (rising ? '#34d399' : '#fb7185')
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden>
       <path d={d} fill="none" stroke={colour} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />

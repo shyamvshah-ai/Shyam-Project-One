@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import type { Asset, KidProfile, TradeAction } from '../../types'
 import { portfolioSummary, firstBuyDate, type HoldingView } from '../../lib/portfolio'
 import { getAsset } from '../../data/universe'
+import { priceHistory, priceHistorySince } from '../../lib/prices'
 import { money, moneyExact, moneySigned, percent, shares as fmtShares } from '../../lib/format'
-import { Card, GainPill, toneClasses } from '../common/ui'
-import PriceChart from '../common/PriceChart'
+import { Card, GainPill, Sparkline, toneClasses } from '../common/ui'
+import HoldingChartModal from './HoldingChartModal'
 import Jargon from '../common/Jargon'
 import CompanyLogo from '../common/CompanyLogo'
 
@@ -126,11 +128,14 @@ function HoldingRow({
   detailed: boolean
   onTrade: (asset: Asset, action: TradeAction) => void
 }) {
+  const [chartOpen, setChartOpen] = useState(false)
   const asset = getAsset(view.ticker)
   if (!asset) return null
   const weight = totalValue > 0 ? view.value / totalValue : 0
   // The holding's price since the day it was first bought (their own story).
   const since = firstBuyDate(kid, view.ticker)
+  const sparkPoints = since ? priceHistorySince(view.ticker, since) : priceHistory(view.ticker, 60)
+  const gainColour = view.gain > 0 ? '#34d399' : view.gain < 0 ? '#fb7185' : '#94a3b8'
 
   return (
     <Card className="!p-3">
@@ -170,20 +175,27 @@ function HoldingRow({
         </div>
       </div>
 
-      {/* Chart tile — how much this holding is up or down (in %) since the day
-          the child bought it. It starts at 0%; the dashed 0% line is where they
-          bought; the axis uses round-number % steps. */}
-      <div className="mt-3 rounded-2xl bg-white/5 px-1 pb-1 pt-2">
-        <PriceChart
-          ticker={view.ticker}
+      {/* Small chart tile — tap to expand to the full "since you bought it" %
+          chart. Kept compact so the holdings list stays skimmable. */}
+      <button
+        onClick={() => setChartOpen(true)}
+        className="mt-3 flex w-full items-center gap-3 rounded-2xl bg-white/5 px-3 py-2 text-left transition hover:bg-white/10"
+        aria-label={`See ${asset.name} chart`}
+      >
+        <Sparkline points={sparkPoints} width={132} height={34} color={gainColour} />
+        <span className="ml-auto text-xs font-semibold text-brand-400">📈 tap to expand</span>
+      </button>
+
+      {chartOpen && (
+        <HoldingChartModal
+          asset={asset}
+          view={view}
           since={since}
-          days={since ? 0 : 60}
-          height={168}
-          xLabel="Date"
-          yLabel="Change (%)"
-          percent
+          detailed={detailed}
+          onClose={() => setChartOpen(false)}
+          onTrade={onTrade}
         />
-      </div>
+      )}
     </Card>
   )
 }
