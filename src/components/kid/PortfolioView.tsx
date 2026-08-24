@@ -1,9 +1,9 @@
 import type { Asset, KidProfile, TradeAction } from '../../types'
 import { portfolioSummary, firstBuyDate, type HoldingView } from '../../lib/portfolio'
 import { getAsset } from '../../data/universe'
-import { priceHistory, priceHistorySince } from '../../lib/prices'
 import { money, moneyExact, moneySigned, percent, shares as fmtShares } from '../../lib/format'
-import { Card, GainPill, MiniChart, toneClasses } from '../common/ui'
+import { Card, GainPill, toneClasses } from '../common/ui'
+import PriceChart from '../common/PriceChart'
 import Jargon from '../common/Jargon'
 import CompanyLogo from '../common/CompanyLogo'
 
@@ -131,7 +131,6 @@ function HoldingRow({
   const weight = totalValue > 0 ? view.value / totalValue : 0
   // The holding's price since the day it was first bought (their own story).
   const since = firstBuyDate(kid, view.ticker)
-  const points = since ? priceHistorySince(view.ticker, since) : priceHistory(view.ticker, 60)
 
   return (
     <Card className="!p-3">
@@ -171,9 +170,24 @@ function HoldingRow({
         </div>
       </div>
 
-      {/* Chart tile — this holding's price since the child bought it. */}
-      <div className="mt-3">
-        <MiniChart points={points} />
+      {/* Chart tile — this holding's price since the child bought it, with
+          labelled axes and a "you bought here" line so the change since buying
+          is easy to read. The vertical scale hugs the real price range, so the
+          height of the move matches how big the move actually was. */}
+      <div className="mt-3 rounded-2xl bg-white/5 px-1 pb-1 pt-2">
+        <div className="px-2 pb-1 text-xs font-semibold text-slate-400">
+          Price since you bought it
+        </div>
+        <PriceChart
+          ticker={view.ticker}
+          since={since}
+          days={since ? 0 : 60}
+          height={168}
+          xLabel="Date"
+          yLabel="Price (£)"
+          buyPrice={view.avgCost}
+          fitDomain
+        />
       </div>
     </Card>
   )

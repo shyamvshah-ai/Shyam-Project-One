@@ -83,8 +83,9 @@ So verify UI changes with **Playwright against a local preview**:
   `JournalView` (diary), `KidDashboard`.
 - `src/components/parent/ParentDashboard.tsx` — overview, allowance, edit
   profiles, passcodes, start-over.
-- `src/components/common/` — `PriceChart`, `ui.tsx` (Card, GainPill, MiniChart,
-  Sparkline), `CompanyLogo`, `Jargon`.
+- `src/components/common/` — `PriceChart` (labelled line chart; the My Money
+  holding tiles pass `xLabel`/`yLabel`/`buyPrice`/`fitDomain`), `ui.tsx` (Card,
+  GainPill, Sparkline), `CompanyLogo`, `Jargon`.
 - `src/lib/` — `prices.ts`, `portfolio.ts` (all the money maths), `format.ts`
   (money + date helpers), `locks.ts`, `storage.ts`.
 - `src/data/` — `universe.ts` (the investable list + blurbs), `prices.json`,

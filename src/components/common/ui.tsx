@@ -1,5 +1,4 @@
-import { useId, type ReactNode } from 'react'
-import { Area, AreaChart, ResponsiveContainer } from 'recharts'
+import { type ReactNode } from 'react'
 import { moneySigned, percent } from '../../lib/format'
 import type { PricePoint } from '../../lib/prices'
 
@@ -60,50 +59,6 @@ export function GainPill({
       {moneySigned(amount)}
       {!simple && pct !== undefined && <span className="opacity-75">({percent(pct)})</span>}
     </span>
-  )
-}
-
-/**
- * A compact, full-width area chart tile for a holding — a friendlier, bigger
- * version of the sparkline that fills its container. Green when it's up over the
- * shown window, red when it's down.
- */
-export function MiniChart({ points, height = 68 }: { points: PricePoint[]; height?: number }) {
-  const gradientId = useId()
-  if (points.length < 2) {
-    return (
-      <div
-        className="flex items-center justify-center rounded-xl bg-white/5 text-xs text-slate-500"
-        style={{ height }}
-      >
-        Chart appears as the days go by
-      </div>
-    )
-  }
-  const rising = points[points.length - 1].price >= points[0].price
-  const colour = rising ? '#34d399' : '#fb7185'
-  return (
-    <div className="rounded-xl bg-white/5 px-1 py-1">
-      <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={points} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={colour} stopOpacity={0.35} />
-              <stop offset="100%" stopColor={colour} stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <Area
-            type="monotone"
-            dataKey="price"
-            stroke={colour}
-            strokeWidth={2.5}
-            fill={`url(#${gradientId})`}
-            baseValue="dataMin"
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
   )
 }
 
