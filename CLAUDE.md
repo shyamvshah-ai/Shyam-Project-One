@@ -78,8 +78,8 @@ So verify UI changes with **Playwright against a local preview**:
 
 ## File map (the bits you'll touch most)
 
-- `src/components/kid/` — `PortfolioView` (My Money; each holding shows a small
-  tap-to-expand sparkline tile), `ExploreView`, `TradeModal` (buy/sell in £),
+- `src/components/kid/` — `PortfolioView` (My Money; a compact one-line-per-
+  holding list — tap a row to open its chart), `ExploreView`, `TradeModal` (buy/sell in £),
   `ChartsView`, `AssetChartModal` (Explore £ chart, change matches the range),
   `HoldingChartModal` (the expanded % -since-bought chart), `RewardsView`,
   `JournalView` (diary), `KidDashboard`.

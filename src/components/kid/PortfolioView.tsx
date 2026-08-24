@@ -2,9 +2,8 @@ import { useState } from 'react'
 import type { Asset, KidProfile, TradeAction } from '../../types'
 import { portfolioSummary, firstBuyDate, type HoldingView } from '../../lib/portfolio'
 import { getAsset } from '../../data/universe'
-import { priceHistory, priceHistorySince } from '../../lib/prices'
 import { money, moneyExact, moneySigned, percent, shares as fmtShares } from '../../lib/format'
-import { Card, GainPill, Sparkline, toneClasses } from '../common/ui'
+import { Card, GainPill, toneClasses } from '../common/ui'
 import HoldingChartModal from './HoldingChartModal'
 import Jargon from '../common/Jargon'
 import CompanyLogo from '../common/CompanyLogo'
@@ -134,33 +133,43 @@ function HoldingRow({
   const weight = totalValue > 0 ? view.value / totalValue : 0
   // The holding's price since the day it was first bought (their own story).
   const since = firstBuyDate(kid, view.ticker)
-  const sparkPoints = since ? priceHistorySince(view.ticker, since) : priceHistory(view.ticker, 60)
-  const gainColour = view.gain > 0 ? '#34d399' : view.gain < 0 ? '#fb7185' : '#94a3b8'
 
   return (
     <Card className="!p-3">
       <div className="flex items-center gap-3">
-        <CompanyLogo asset={asset} size={38} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate font-extrabold text-ink">{asset.name}</span>
+        {/* Tap the holding to open its chart — the whole row is the button, so
+            the list stays a short, clear line per holding. */}
+        <button
+          onClick={() => setChartOpen(true)}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          title="Tap to see the chart"
+          aria-label={`See ${asset.name} chart`}
+        >
+          <CompanyLogo asset={asset} size={38} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate font-extrabold text-ink">{asset.name}</span>
+              {detailed && (
+                <span className="shrink-0 text-xs text-slate-500">
+                  {fmtShares(view.shares)} × {moneyExact(view.price)}
+                </span>
+              )}
+            </div>
+            <div className="mt-0.5 flex items-center gap-2">
+              <span className="text-lg font-extrabold text-ink">{money(view.value)}</span>
+              <GainPill amount={view.gain} pct={view.gainPct} size="sm" pctOnly />
+            </div>
             {detailed && (
-              <span className="shrink-0 text-xs text-slate-500">
-                {fmtShares(view.shares)} × {moneyExact(view.price)}
-              </span>
+              <div className="mt-0.5 text-xs text-slate-400">
+                <Jargon k="average cost">Avg cost</Jargon> {moneyExact(view.avgCost)} ·{' '}
+                {percent(weight, 0)} of portfolio
+              </div>
             )}
           </div>
-          <div className="mt-0.5 flex items-center gap-2">
-            <span className="text-lg font-extrabold text-ink">{money(view.value)}</span>
-            <GainPill amount={view.gain} pct={view.gainPct} size="sm" pctOnly />
-          </div>
-          {detailed && (
-            <div className="mt-0.5 text-xs text-slate-400">
-              <Jargon k="average cost">Avg cost</Jargon> {moneyExact(view.avgCost)} ·{' '}
-              {percent(weight, 0)} of portfolio
-            </div>
-          )}
-        </div>
+          <span aria-hidden className="shrink-0 text-lg text-slate-500">
+            📈
+          </span>
+        </button>
 
         <div className="flex flex-col gap-1">
           <button className="btn-primary !px-3 !py-1 text-sm" onClick={() => onTrade(asset, 'buy')}>
@@ -174,17 +183,6 @@ function HoldingRow({
           </button>
         </div>
       </div>
-
-      {/* Small chart tile — tap to expand to the full "since you bought it" %
-          chart. Kept compact so the holdings list stays skimmable. */}
-      <button
-        onClick={() => setChartOpen(true)}
-        className="mt-3 flex w-full items-center gap-3 rounded-2xl bg-white/5 px-3 py-2 text-left transition hover:bg-white/10"
-        aria-label={`See ${asset.name} chart`}
-      >
-        <Sparkline points={sparkPoints} width={132} height={34} color={gainColour} />
-        <span className="ml-auto text-xs font-semibold text-brand-400">📈 tap to expand</span>
-      </button>
 
       {chartOpen && (
         <HoldingChartModal
