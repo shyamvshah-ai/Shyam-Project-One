@@ -44,6 +44,7 @@ function buildKid(seed: SeedKid): KidProfile {
 export function makeInitialState(): AppState {
   return {
     version: 2,
+    epoch: 0,
     kids: {
       sai: buildKid(SEED[0]),
       leila: buildKid(SEED[1]),

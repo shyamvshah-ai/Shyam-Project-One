@@ -191,6 +191,8 @@ function reducer(state: AppState, action: Action): AppState {
         ...fresh,
         kids: { sai: carry('sai'), leila: carry('leila') },
         locks: getLocks(state),
+        // A reset must win over any device still holding the old history.
+        epoch: (state.epoch ?? 0) + 1,
       }
     }
 
@@ -201,6 +203,31 @@ function reducer(state: AppState, action: Action): AppState {
     default:
       return state
   }
+}
+
+/** How much trade/deposit history a state carries — sync's "richness" measure. */
+function historyWeight(s: AppState): number {
+  const k = s.kids
+  const count = (kid?: KidProfile) => (kid ? kid.trades.length + kid.deposits.length : 0)
+  return count(k?.sai) + count(k?.leila)
+}
+
+/**
+ * Decide which of two states cross-device sync should trust. A deliberate
+ * "Start over" (higher epoch) always wins; otherwise the one with more trade +
+ * deposit history wins, so a device that's fallen behind can never overwrite a
+ * fuller record — and a device that still holds lost trades restores them by
+ * simply being opened. Exact ties keep `remote` (the already-shared copy) so
+ * everyone converges.
+ */
+function chooseWinner(local: AppState, remote: AppState): AppState {
+  const el = local.epoch ?? 0
+  const er = remote.epoch ?? 0
+  if (el !== er) return el > er ? local : remote
+  const hl = historyWeight(local)
+  const hr = historyWeight(remote)
+  if (hl !== hr) return hl > hr ? local : remote
+  return remote
 }
 
 export type SyncStatus = 'off' | 'connecting' | 'synced' | 'error'
@@ -270,9 +297,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const remote = await getRemote(familyCode)
         if (cancelled) return
         if (remote) {
-          lastSyncedJson.current = JSON.stringify(remote.state)
-          lastAppliedTs.current = remote.updatedAt
-          dispatch({ type: 'HYDRATE', state: remote.state })
+          const local = stateRef.current
+          const winner = chooseWinner(local, remote.state)
+          if (winner === remote.state) {
+            // The shared copy is as good or better — adopt it.
+            lastSyncedJson.current = JSON.stringify(remote.state)
+            lastAppliedTs.current = remote.updatedAt
+            dispatch({ type: 'HYDRATE', state: remote.state })
+          } else {
+            // This device holds a fuller record (e.g. trades that were lost
+            // elsewhere) — restore it as the shared copy instead of losing it.
+            const ts = await putRemote(familyCode, local)
+            if (cancelled) return
+            lastSyncedJson.current = JSON.stringify(local)
+            lastAppliedTs.current = ts
+          }
         } else {
           const ts = await putRemote(familyCode, stateRef.current)
           lastSyncedJson.current = JSON.stringify(stateRef.current)
@@ -305,15 +344,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const handle = setTimeout(async () => {
       try {
         // Read-before-write: if another device has written since we last synced,
-        // adopt their newer state instead of overwriting it. This is what stops
-        // a device that's fallen behind from wiping out newer trades.
+        // don't blindly overwrite it — keep whichever record is richer (or the
+        // deliberate reset). This stops a device that's fallen behind from
+        // wiping out newer trades.
         const remote = await getRemote(familyCode)
         if (remote && remote.updatedAt > lastAppliedTs.current) {
-          lastSyncedJson.current = JSON.stringify(remote.state)
-          lastAppliedTs.current = remote.updatedAt
-          dispatch({ type: 'HYDRATE', state: remote.state })
-          setSyncStatus('synced')
-          return
+          if (chooseWinner(state, remote.state) === remote.state) {
+            lastSyncedJson.current = JSON.stringify(remote.state)
+            lastAppliedTs.current = remote.updatedAt
+            dispatch({ type: 'HYDRATE', state: remote.state })
+            setSyncStatus('synced')
+            return
+          }
+          // Our record wins — fall through and publish it over the top.
         }
         const ts = await putRemote(familyCode, state)
         lastSyncedJson.current = json
@@ -337,13 +380,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // A successful read counts as reconciled, so pushing is safe from here.
         syncReady.current = true
         if (remote.updatedAt <= lastAppliedTs.current) return
-        // The shared record moved on. Only adopt it if we have no un-pushed
-        // local edits of our own — otherwise leave it to the push effect above,
-        // which reconciles the two without dropping this device's changes.
-        if (JSON.stringify(stateRef.current) !== lastSyncedJson.current) return
-        lastSyncedJson.current = JSON.stringify(remote.state)
-        lastAppliedTs.current = remote.updatedAt
-        dispatch({ type: 'HYDRATE', state: remote.state })
+        // The shared record moved on. Only reconcile if we have no un-pushed
+        // local edits of our own — otherwise leave it to the push effect above.
+        const local = stateRef.current
+        if (JSON.stringify(local) !== lastSyncedJson.current) return
+        if (chooseWinner(local, remote.state) === remote.state) {
+          lastSyncedJson.current = JSON.stringify(remote.state)
+          lastAppliedTs.current = remote.updatedAt
+          dispatch({ type: 'HYDRATE', state: remote.state })
+        } else {
+          // Remote lost history (a stale device clobbered it elsewhere) — put
+          // our fuller copy back so every device recovers it.
+          const ts = await putRemote(familyCode, local)
+          lastSyncedJson.current = JSON.stringify(local)
+          lastAppliedTs.current = ts
+        }
         setSyncStatus('synced')
       } catch {
         /* keep last status; try again next tick */

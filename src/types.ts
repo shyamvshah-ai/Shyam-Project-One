@@ -145,6 +145,12 @@ export interface AppState {
   kids: Record<'sai' | 'leila', KidProfile>
   /** Passcodes per profile. Optional so state saved before this feature loads. */
   locks?: Locks
+  /**
+   * Bumped by "Start over" (RESET). Cross-device sync trusts the higher epoch
+   * first, so a deliberate reset always wins over a device that still holds the
+   * pre-reset history. Optional so states saved before this feature load as 0.
+   */
+  epoch?: number
 }
 
 export type ProfileId = 'sai' | 'leila' | 'parent'
