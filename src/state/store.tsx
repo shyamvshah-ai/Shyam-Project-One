@@ -243,6 +243,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [state])
   const lastAppliedTs = useRef('') // remote timestamp we last applied/wrote
   const lastSyncedJson = useRef('') // state JSON last agreed with the server
+  // Guard: don't push anything to the shared record until this device has
+  // reconciled with the server at least once. Without this, a device that was
+  // opened with stale data would upload its old snapshot on startup (before it
+  // had a chance to pull the latest), silently clobbering newer trades made on
+  // another device. `false` until the first successful read/write.
+  const syncReady = useRef(false)
 
   // Always keep a local copy (offline + the sync fallback).
   useEffect(() => {
@@ -257,6 +263,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return
     }
     let cancelled = false
+    syncReady.current = false
     setSyncStatus('connecting')
     ;(async () => {
       try {
@@ -271,7 +278,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           lastSyncedJson.current = JSON.stringify(stateRef.current)
           lastAppliedTs.current = ts
         }
-        if (!cancelled) setSyncStatus('synced')
+        if (!cancelled) {
+          syncReady.current = true
+          setSyncStatus('synced')
+        }
       } catch (err) {
         if (!cancelled) {
           console.warn('sync: join failed', err)
@@ -288,10 +298,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // which also stops a pull→apply→push feedback loop between devices.
   useEffect(() => {
     if (!SYNC_ENABLED || !familyCode) return
+    // Never upload until we've reconciled with the server (see syncReady).
+    if (!syncReady.current) return
     const json = JSON.stringify(state)
     if (json === lastSyncedJson.current) return
     const handle = setTimeout(async () => {
       try {
+        // Read-before-write: if another device has written since we last synced,
+        // adopt their newer state instead of overwriting it. This is what stops
+        // a device that's fallen behind from wiping out newer trades.
+        const remote = await getRemote(familyCode)
+        if (remote && remote.updatedAt > lastAppliedTs.current) {
+          lastSyncedJson.current = JSON.stringify(remote.state)
+          lastAppliedTs.current = remote.updatedAt
+          dispatch({ type: 'HYDRATE', state: remote.state })
+          setSyncStatus('synced')
+          return
+        }
         const ts = await putRemote(familyCode, state)
         lastSyncedJson.current = json
         lastAppliedTs.current = ts
@@ -310,7 +333,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const id = setInterval(async () => {
       try {
         const remote = await getRemote(familyCode)
-        if (!remote || remote.updatedAt <= lastAppliedTs.current) return
+        if (!remote) return
+        // A successful read counts as reconciled, so pushing is safe from here.
+        syncReady.current = true
+        if (remote.updatedAt <= lastAppliedTs.current) return
+        // The shared record moved on. Only adopt it if we have no un-pushed
+        // local edits of our own — otherwise leave it to the push effect above,
+        // which reconciles the two without dropping this device's changes.
+        if (JSON.stringify(stateRef.current) !== lastSyncedJson.current) return
         lastSyncedJson.current = JSON.stringify(remote.state)
         lastAppliedTs.current = remote.updatedAt
         dispatch({ type: 'HYDRATE', state: remote.state })
