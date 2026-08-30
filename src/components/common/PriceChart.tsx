@@ -10,8 +10,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { priceHistory, priceHistorySince } from '../../lib/prices'
-import { moneyExact, shortDate } from '../../lib/format'
+import { latestPrice, localPrice, priceHistory, priceHistorySince } from '../../lib/prices'
+import { localMoney, moneyExact, shortDate } from '../../lib/format'
 
 // Shared time ranges for every price chart in the app.
 export const RANGES = [
@@ -71,6 +71,7 @@ export default function PriceChart({
   yLabel,
   percent = false,
   percentBase,
+  native = false,
 }: {
   ticker: string
   days?: number
@@ -80,6 +81,8 @@ export default function PriceChart({
   yLabel?: string
   percent?: boolean
   percentBase?: number
+  /** Show the price in the asset's own currency (e.g. $ / p) instead of £. */
+  native?: boolean
 }) {
   const raw = useMemo(
     () => (since ? priceHistorySince(ticker, since) : priceHistory(ticker, days || undefined)),
@@ -92,6 +95,16 @@ export default function PriceChart({
       </p>
     )
 
+  // Native-currency mode: our history is stored in £, but we know the latest
+  // price in the asset's own currency. Scale the £ line by that ratio so the
+  // axis reads in $ / p etc. (exact at the latest point; earlier points assume
+  // today's exchange rate, which is close enough for a learning chart).
+  const local = native ? localPrice(ticker) : undefined
+  const gbpLatest = native ? latestPrice(ticker) : undefined
+  const nativeCcy =
+    local && local.currency !== 'GBP' && gbpLatest && gbpLatest > 0 ? local.currency : undefined
+  const nativeFactor = nativeCcy && gbpLatest ? local!.price / gbpLatest : 1
+
   // Percent mode: measure every day against the average buy price (so the last
   // point equals the holding's real gain, matching its pill), and pin the very
   // first day to exactly 0% — that's the moment they bought.
@@ -99,7 +112,7 @@ export default function PriceChart({
   const percentMode = percent && pctBase > 0
   const data = percentMode
     ? raw.map((p, i) => ({ date: p.date, value: i === 0 ? 0 : (p.price / pctBase - 1) * 100 }))
-    : raw.map((p) => ({ date: p.date, value: p.price }))
+    : raw.map((p) => ({ date: p.date, value: p.price * nativeFactor }))
 
   const rising = data[data.length - 1].value >= data[0].value
   const colour = rising ? '#34d399' : '#fb7185'
@@ -118,12 +131,16 @@ export default function PriceChart({
 
   const fmtPctWhole = (v: number) => `${v > 0 ? '+' : ''}${Math.round(v)}%`
   const fmtPctExact = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`
-  const yTickFormatter = percentMode ? fmtPctWhole : (v: number) => moneyExact(v)
+  const fmtMoney = (v: number) => (nativeCcy ? localMoney(nativeCcy, v) : moneyExact(v))
+  const yTickFormatter = percentMode ? fmtPctWhole : fmtMoney
+  // Wider axis for longer money labels (e.g. "₩1,234,567"); enough for £/$/p.
+  const yWidth = percentMode ? 64 : nativeCcy ? 78 : 68
 
-  // Titled axes need room; the compact modal chart keeps its tight margins.
+  // Titled axes need room; the plain money chart keeps a snug — but not
+  // clipping — left margin so the axis numbers are never cut off.
   const margin = labelled
     ? { top: 8, right: 12, left: 8, bottom: 22 }
-    : { top: 5, right: 5, left: -18, bottom: 0 }
+    : { top: 5, right: 8, left: 0, bottom: 0 }
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -145,7 +162,7 @@ export default function PriceChart({
           tickFormatter={yTickFormatter}
           ticks={yTicks}
           domain={yDomain}
-          width={64}
+          width={yWidth}
           tick={{ fontSize: 11, fill: '#94a3b8' }}
         >
           {yLabel && (
@@ -158,7 +175,7 @@ export default function PriceChart({
           )}
         </YAxis>
         <Tooltip
-          formatter={(v: number) => [percentMode ? fmtPctExact(v) : moneyExact(v), percentMode ? 'Change' : 'Price']}
+          formatter={(v: number) => [percentMode ? fmtPctExact(v) : fmtMoney(v), percentMode ? 'Change' : 'Price']}
           labelFormatter={(l) => shortDate(String(l))}
         />
         {/* 0% baseline = the price they bought at (no label needed). */}

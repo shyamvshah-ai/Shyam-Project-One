@@ -136,7 +136,10 @@ export default function ChartsView({ kid, detailed }: { kid: KidProfile; detaile
                 )
               })}
             </div>
-            <PriceChart ticker={ticker} since={firstBuyDate(kid, ticker)} />
+            <PriceChart ticker={ticker} since={firstBuyDate(kid, ticker)} native />
+            <p className="mt-1 text-center text-xs text-slate-500">
+              Shown in the price’s own currency.
+            </p>
           </>
         )}
       </Card>
