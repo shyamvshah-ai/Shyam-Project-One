@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { Asset, TradeAction } from '../../types'
 import { latestPrice, localPrice, priceHistory } from '../../lib/prices'
 import { moneyExact, localMoney } from '../../lib/format'
@@ -33,15 +34,13 @@ export default function AssetChartModal({
   const rangePct = startPrice ? rangeChange / startPrice : 0
   const periodLabel = range.label === 'All' ? 'all time' : `past ${range.label}`
 
-  return (
-    <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-night-800 p-5 text-ink shadow-2xl ring-1 ring-white/10 sm:rounded-3xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+  return createPortal(
+    <div className="fixed inset-0 z-40 overflow-y-auto bg-black/40" onClick={onClose}>
+      <div className="flex min-h-full items-end justify-center p-0 sm:items-center sm:p-4">
+        <div
+          className="w-full max-w-lg rounded-t-3xl bg-night-800 p-5 text-ink shadow-2xl ring-1 ring-white/10 sm:rounded-3xl"
+          onClick={(e) => e.stopPropagation()}
+        >
         <div className="mb-3 flex items-start gap-3">
           <CompanyLogo asset={asset} size={44} />
           <div className="min-w-0 flex-1">
@@ -102,7 +101,9 @@ export default function AssetChartModal({
             Buy
           </button>
         </div>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
