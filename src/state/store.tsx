@@ -41,6 +41,7 @@ type Action =
   | { type: 'SET_LOCK'; who: 'sai' | 'leila' | 'parent'; pin: string }
   | { type: 'RESET' }
   | { type: 'HYDRATE'; state: AppState }
+  | { type: 'RESTORE'; state: AppState }
 
 /** Merge any newly-earned badges into a child's collection (never removes). */
 function awardBadges(kid: KidProfile): KidProfile {
@@ -199,6 +200,11 @@ function reducer(state: AppState, action: Action): AppState {
     case 'HYDRATE':
       // Replace all state with a version pulled from cross-device sync.
       return action.state
+
+    case 'RESTORE':
+      // Adopt an imported backup file. Bump the epoch so this deliberate
+      // restore wins across every synced device, and normalise the version.
+      return { ...action.state, version: CURRENT_VERSION, epoch: (state.epoch ?? 0) + 1 }
 
     default:
       return state

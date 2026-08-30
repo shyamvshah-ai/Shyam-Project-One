@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import type { KidProfile } from '../../types'
+import { useRef, useState } from 'react'
+import type { AppState, KidProfile } from '../../types'
 import { useStore } from '../../state/store'
 import { portfolioSummary } from '../../lib/portfolio'
 import { getLocks } from '../../lib/locks'
@@ -100,6 +100,8 @@ export default function ParentDashboard({
         </p>
       </Card>
 
+      <BackupCard />
+
       <Card>
         <SectionTitle>Start over</SectionTitle>
         <p className="mb-3 text-sm text-slate-400">
@@ -115,6 +117,89 @@ export default function ParentDashboard({
         </button>
       </Card>
     </div>
+  )
+}
+
+function BackupCard() {
+  const { state, dispatch, familyCode } = useStore()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [saved, setSaved] = useState(false)
+  const [restored, setRestored] = useState(false)
+
+  const saveBackup = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `junior-traders-backup-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-picking the same file later
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(String(reader.result))
+      } catch {
+        window.alert('Sorry — that file could not be read. Please pick a Junior Traders backup file.')
+        return
+      }
+      const s = parsed as Partial<AppState>
+      if (!s || typeof s !== 'object' || !s.kids || !s.kids.sai || !s.kids.leila) {
+        window.alert("That doesn't look like a Junior Traders backup file.")
+        return
+      }
+      const where = familyCode ? ', on every synced device' : ''
+      const ok = window.confirm(
+        `Restore this backup?\n\nThis replaces the current data for BOTH children with what's in the file${where}. Save a backup first if you're not sure.`,
+      )
+      if (!ok) return
+      dispatch({ type: 'RESTORE', state: s as AppState })
+      setRestored(true)
+      setTimeout(() => setRestored(false), 2500)
+    }
+    reader.readAsText(file)
+  }
+
+  return (
+    <Card>
+      <SectionTitle>Backup &amp; restore</SectionTitle>
+      <p className="mb-3 text-sm text-slate-400">
+        Save a copy of everything (both children’s money, holdings and trades) to a file on this
+        device. If anything ever goes wrong, you can restore from that file.{' '}
+        {familyCode && 'Restoring updates every synced device.'}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button onClick={saveBackup} className="btn-primary text-sm">
+          ⬇︎ Save a backup
+        </button>
+        <button onClick={() => fileRef.current?.click()} className="btn-ghost text-sm">
+          ⬆︎ Restore from backup
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={onFile}
+          className="hidden"
+        />
+      </div>
+      {saved && <p className="mt-2 text-sm font-semibold text-mint">Backup saved to this device ✓</p>}
+      {restored && <p className="mt-2 text-sm font-semibold text-mint">Restored ✓</p>}
+      <p className="mt-3 text-xs text-slate-500">
+        Tip: save a backup now and then — it’s a safe copy you keep, and the quickest way to move
+        everything to a new device.
+      </p>
+    </Card>
   )
 }
 

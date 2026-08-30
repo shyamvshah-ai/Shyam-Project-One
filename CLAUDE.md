@@ -84,7 +84,9 @@ So verify UI changes with **Playwright against a local preview**:
   `HoldingChartModal` (the expanded % -since-bought chart), `RewardsView`,
   `JournalView` (diary), `KidDashboard`.
 - `src/components/parent/ParentDashboard.tsx` — overview, allowance, edit
-  profiles, passcodes, start-over.
+  profiles, passcodes, backup/restore (download/upload the whole state as JSON;
+  restore uses the `RESTORE` action which bumps `epoch` so it wins on sync),
+  start-over.
 - `src/components/common/` — `PriceChart` (labelled line chart; `percent` +
   `percentBase` switches it to show % change vs the average buy price, starting
   at 0% and ending on the holding's real gain), `ui.tsx` (Card, GainPill with a
