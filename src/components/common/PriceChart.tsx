@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts'
 import { latestPrice, localPrice, priceHistory, priceHistorySince } from '../../lib/prices'
-import { localMoney, moneyExact, shortDate } from '../../lib/format'
+import { localMoney, moneyExact, monthYear, niceDate, shortDate } from '../../lib/format'
 
 // Shared time ranges for every price chart in the app.
 export const RANGES = [
@@ -118,6 +118,15 @@ export default function PriceChart({
   const colour = rising ? '#34d399' : '#fb7185'
   const labelled = Boolean(xLabel || yLabel)
 
+  // Once the chart covers well over a year (e.g. the 5Y / All views), a
+  // day-and-month axis like "10 Aug" can't tell 2022 from 2026 — so switch the
+  // ticks to "Aug 2024" and give the tooltip the full date with its year.
+  const spanDays =
+    (new Date(data[data.length - 1].date).getTime() - new Date(data[0].date).getTime()) / 86_400_000
+  const longSpan = spanDays > 550
+  const fmtXTick = longSpan ? monthYear : shortDate
+  const fmtTooltipDate = longSpan ? niceDate : shortDate
+
   // Round-number vertical axis for the percent tiles; the plain £ chart keeps
   // its auto axis (used by the Explore price pop-up).
   let yDomain: [number, number] | ['auto', 'auto'] = ['auto', 'auto']
@@ -149,7 +158,7 @@ export default function PriceChart({
         <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
         <XAxis
           dataKey="date"
-          tickFormatter={shortDate}
+          tickFormatter={fmtXTick}
           minTickGap={60}
           tick={{ fontSize: 11, fill: '#94a3b8' }}
           height={xLabel ? 34 : undefined}
@@ -176,7 +185,7 @@ export default function PriceChart({
         </YAxis>
         <Tooltip
           formatter={(v: number) => [percentMode ? fmtPctExact(v) : fmtMoney(v), percentMode ? 'Change' : 'Price']}
-          labelFormatter={(l) => shortDate(String(l))}
+          labelFormatter={(l) => fmtTooltipDate(String(l))}
         />
         {/* 0% baseline = the price they bought at (no label needed). */}
         {percentMode && (

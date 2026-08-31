@@ -56,6 +56,12 @@ export function shortDate(iso: string): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
+/** Month + year like "Aug 2024" — for axes spanning several years. */
+export function monthYear(iso: string): string {
+  const d = new Date(iso + 'T00:00:00')
+  return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+}
+
 /** Format a price in its own local currency, e.g. "$308.20", "475p", "€120.50". */
 export function localMoney(currency: string, price: number): string {
   switch (currency) {

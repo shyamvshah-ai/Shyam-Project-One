@@ -20,8 +20,9 @@ const OUT = resolve(__dirname, '../src/data/prices.json')
 
 const CHART = 'https://query1.finance.yahoo.com/v8/finance/chart/'
 const RANGE = '5y'
+// Keep a full five years of history so the "5Y" chart really spans five years.
 const cutoff = new Date()
-cutoff.setDate(cutoff.getDate() - 760)
+cutoff.setFullYear(cutoff.getFullYear() - 5)
 
 // A few symbols don't follow the simple rule (e.g. ASOS trades as ASC.L).
 const OVERRIDES = {
